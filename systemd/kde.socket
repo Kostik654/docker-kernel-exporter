@@ -1,0 +1,9 @@
+[Unit]
+Description=Kernel Docker Exporter Socket
+
+[Socket]
+ListenStream=0.0.0.0:6545
+Accept=yes
+
+[Install]
+WantedBy=sockets.target

@@ -1,0 +1,10 @@
+# KERNEL DOCKER EXPORTER CONFIGURATION FILE
+# ATTENTION: ALL THE SPACE CHARS WILL BE DELETED!
+
+# default: 3 seconds
+scrape_period =4#123
+# absolute path to the target output file
+metrics_file = /home/webber/data/metrics.data # hi
+# default dockerd path with containers
+dockerd_path= /var/lib/docker/containers   #hellooo 
+# author: Kostik654

@@ -1,0 +1,14 @@
+[Unit]
+Description=Kernel Docker Exporter Service
+
+[Service]
+User=webber
+WorkingDirectory=/home/webber/scripts
+ExecStart=-/bin/bash transfer-file.sh
+
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
