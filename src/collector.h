@@ -1,8 +1,6 @@
 #ifndef COLLECTOR_H
 #define COLLECTOR_H
 #include "additional_funcs.h"
-#include <string>
-#include <vector>
 
 class Collector
 {
@@ -13,50 +11,20 @@ private:
     const std::string cgroup_base_path{"/sys/fs/cgroup/system.slice/"};
     const std::string net_dev_stat_base_path{"/proc/"};
     const std::string net_dev_file_rel_path{"/net/dev"};
+    const std::string meminfo_file_path{"/proc/meminfo"};
 
     config_data cfg_data;
+
+    StaticHostData static_host_data;
 
     std::vector<std::string> actual_containers_list;
 
 public:
+    static bool exit_flag;
+
     Collector(config_data cfg);
 
-    struct ContainerData
-    {
-    
-    };
-
-    // host OR container
-    struct Cgroup2Data
-    {
-        size_t cpu_usage_usec;
-        size_t cpu_user_usec;
-        size_t cpu_system_usec;
-
-        size_t memory_current;
-
-        size_t io_rbytes;
-        size_t io_wbytes;
-
-        std::vector<size_t> pid_list;
-    };
-
-    // one process
-    struct NetworkData
-    {
-        size_t rx_bytes;
-        size_t tx_bytes;
-    };
-
-    // just host
-    struct HostData
-    {
-        size_t cores_count;
-        size_t memory_max;
-        Cgroup2Data cgroup2data;
-    };
-
-    HostData collect_host_data();
+    Cgroup2Data collect_host_data();
     NetworkData collect_process_network_data(size_t pid_);
     Cgroup2Data collect_cgroup2_data(std::string base_path); // host OR container
     ContainerData collect_container_data(std::string cfid_);
@@ -65,8 +33,13 @@ public:
     std::string get_container_cgroup2_full_path(std::string cfid_);
     std::string get_pid_netdev_full_path(std::string cfid_);
 
+    std::string get_container_metric_field(std::string m_name, std::string m_desc, std::string m_unit, std::string c_name, std::string c_id, std::string c_state);
+
+    float get_container_cpu_usage();
+
     void startCollecting();
     bool check_paths();
+    bool set_static_host_info(StaticHostData *host_stats);
     void printConfig();
     ~Collector();
 };
