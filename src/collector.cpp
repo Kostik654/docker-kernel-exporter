@@ -132,7 +132,8 @@ void Collector::startCollecting()
 
     printf("\n== Starting collector ==\n\n");
 
-    set_static_host_info(&this->static_host_data);
+    if (!set_static_host_info(&this->static_host_data))
+        Collector::exit_flag = true;
 
     while (!Collector::exit_flag)
     {
