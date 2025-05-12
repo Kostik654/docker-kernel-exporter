@@ -2,7 +2,6 @@
 
 int main()
 {
-
     // Uploading configuration from file
     config_data confy = upload_config_data();
 

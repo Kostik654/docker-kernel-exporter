@@ -9,12 +9,20 @@
 #include <filesystem>
 #include <fstream>
 #include <thread>
+#include <unistd.h>
 
 struct config_data
 {
     int scrape_period = 3;
     std::string default_dockerd_base_path{"/var/lib/docker/containers/"};
     std::string default_metrics_file{"./metrics.data"};
+};
+
+struct MemInfoData
+{
+    unsigned int mem_total_kB;
+    unsigned int mem_free_kB;
+    unsigned int mem_avail_kB;
 };
 
 struct MetricField
@@ -56,11 +64,10 @@ struct NetworkData
 };
 
 // just host
-struct HostData
+struct StaticHostData
 {
-    size_t cores_count;
+    size_t vcpus_count;
     size_t memory_max;
-    Cgroup2Data cgroup2data;
 };
 
 #endif

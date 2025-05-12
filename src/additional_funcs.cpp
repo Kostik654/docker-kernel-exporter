@@ -29,6 +29,76 @@ bool update_containers_list(std::string base_path, std::vector<std::string> *lis
     }
 }
 
+unsigned int get_meminfo_value(std::string line, std::string var_name)
+{
+    size_t start = line.find_first_of("0123456789");
+    size_t end = line.find(" kB", start);
+
+    if (start != std::string::npos && end != std::string::npos)
+    {
+        return std::stol(line.substr(start, end - start));
+    }
+    else
+        throw std::runtime_error("unable to find value for " + var_name);
+}
+
+MemInfoData get_meminfo_data(std::string filepath)
+{
+    MemInfoData mem_data;
+
+    bool total_initialized = false;
+    bool free_initialized = false;
+    bool avail_initialized = false;
+
+    std::ifstream meminfo_file(filepath);
+    std::string line;
+
+    if (meminfo_file.is_open())
+    {
+        try
+        {
+            while (std::getline(meminfo_file, line))
+            {
+                if (line.find("MemTotal") == 0)
+                {
+                    mem_data.mem_total_kB = get_meminfo_value(line, "MemTotal");
+                    total_initialized = true;
+                    continue;
+                }
+                if (line.find("MemFree") == 0)
+                {
+                    mem_data.mem_total_kB = get_meminfo_value(line, "MemFree");
+                    free_initialized = true;
+                    continue;
+                }
+                if (line.find("MemAvailable") == 0)
+                {
+                    mem_data.mem_total_kB = get_meminfo_value(line, "MemAvailable");
+                    avail_initialized = true;
+                    continue;
+                }
+
+                if (total_initialized && free_initialized && avail_initialized)
+                    break;
+            }
+
+            meminfo_file.close();
+
+            if (!(total_initialized && free_initialized && avail_initialized))
+                throw std::runtime_error("one or more parameters was not foud!");
+        }
+        catch (const std::exception &err)
+        {
+            std::cerr << "Getting memory info [" << filepath << "] error occurred: " << err.what() << std::endl;
+            if (meminfo_file.is_open())
+                meminfo_file.close();
+            exit(3);
+        }
+    }
+
+    return mem_data;
+}
+
 bool output_metrics(std::string content, std::string filepath)
 {
 
@@ -50,9 +120,13 @@ config_data upload_config_data(std::string filepath)
 {
     config_data cfg;
 
-    bool scrapeperiod_ch = false;
-    bool metricsfile_ch = false;
-    bool dockerdpath_ch = false;
+    std::ifstream conf_file(filepath);
+    std::string line;
+    std::vector<std::string> lines;
+
+    bool scrapeperiod_initialized = false;
+    bool metricsfile_initialized = false;
+    bool dockerdpath_initialized = false;
 
     if (!fs::exists(filepath))
     {
@@ -62,90 +136,99 @@ config_data upload_config_data(std::string filepath)
     else
         try
         {
-
             printf("\nUploading configuration from file: %s\n", filepath.c_str());
 
-            std::string line;
-            std::ifstream infile(filepath);
-            std::vector<std::string> lines;
-
-            int line_num = -1;
-
-            while (std::getline(infile, line))
+            if (conf_file.is_open())
             {
-
-                std::string clean_line{""};
-
-                // delete all spaces
-                for (char c : line)
-                {
-                    if (!std::isspace(static_cast<unsigned char>(c)))
-                        clean_line = clean_line + c;
-                }
-
-                if (clean_line.empty() || clean_line[0] == '#')
-                    continue;
-
-                // returns npos if char # was not found
-                size_t comment_pos = clean_line.find('#');
-                if (comment_pos != std::string::npos)
-                    clean_line = clean_line.substr(0, comment_pos);
-
-                size_t eq_pos = clean_line.find('=');
-                if (eq_pos == std::string::npos)
-                {
-                    std::cerr << "Syntax error, '=' was not found in line: " << line << std::endl;
-                    exit(2);
-                }
-                else
+                while (std::getline(conf_file, line))
                 {
 
-                    if (clean_line.length() < 2 || clean_line[0] == '=')
+                    std::string clean_line{""};
+
+                    // delete all spaces
+                    for (char c : line)
                     {
-                        std::cerr << "Error: line [" << line << "] is empty for parsing" << std::endl;
+                        if (!std::isspace(static_cast<unsigned char>(c)))
+                            clean_line = clean_line + c;
+                    }
+
+                    if (clean_line.empty() || clean_line[0] == '#')
+                        continue;
+
+                    // returns npos if char # was not found
+                    size_t comment_pos = clean_line.find('#');
+                    if (comment_pos != std::string::npos)
+                        clean_line = clean_line.substr(0, comment_pos);
+
+                    size_t eq_pos = clean_line.find('=');
+                    if (eq_pos == std::string::npos)
+                    {
+                        std::cerr << "Syntax error, '=' was not found in line: " << line << std::endl;
                         exit(2);
-                    }
-
-                    std::string param_name = clean_line.substr(0, eq_pos);
-                    std::string value_ = clean_line.substr(eq_pos + 1);
-
-                    if (param_name == "scrape_period")
-                    {
-                        cfg.scrape_period = std::stoi(value_);
-                        scrapeperiod_ch = true;
-                    }
-                    else if (param_name == "metrics_file")
-                    {
-                        cfg.default_metrics_file = value_;
-                        metricsfile_ch = true;
-                    }
-                    else if (param_name == "dockerd_path")
-                    {
-                        cfg.default_dockerd_base_path = value_;
-                        dockerdpath_ch = true;
                     }
                     else
                     {
-                        std::cerr << "Error: param [" << param_name << "] does not exist" << std::endl;
-                        exit(2);
-                    }
 
-                    printf(">> uploader: %s = %s\n", param_name.c_str(), value_.c_str());
-                    // std::cout << param_name << " = " << value_ << std::endl;
+                        if (clean_line.length() < 2 || clean_line[0] == '=')
+                        {
+                            std::cerr << "Error: line [" << line << "] is empty for parsing" << std::endl;
+                            exit(2);
+                        }
+
+                        std::string param_name = clean_line.substr(0, eq_pos);
+                        std::string value_ = clean_line.substr(eq_pos + 1);
+
+                        if (param_name == "scrape_period")
+                        {
+                            cfg.scrape_period = std::stoi(value_);
+                            scrapeperiod_initialized = true;
+                        }
+                        else if (param_name == "metrics_file")
+                        {
+                            cfg.default_metrics_file = value_;
+                            metricsfile_initialized = true;
+                        }
+                        else if (param_name == "dockerd_path")
+                        {
+                            cfg.default_dockerd_base_path = value_;
+                            dockerdpath_initialized = true;
+                        }
+                        else
+                        {
+                            std::cerr << "Error: param [" << param_name << "] does not exist" << std::endl;
+                            exit(2);
+                        }
+
+                        printf(">> uploader: %s = %s\n", param_name.c_str(), value_.c_str());
+
+                        if (metricsfile_initialized && dockerdpath_initialized && scrapeperiod_initialized)
+                        {
+                            conf_file.close();
+                            break;
+                        }
+                    }
                 }
             }
+            else
+            {
+                std::cerr << ">> Error: unable to open the configuration file [" << filepath << "].\nThe uninitialized vars will be set to defaults.\n";
+                return config_data();
+            }
 
-            if (metricsfile_ch && dockerdpath_ch && scrapeperiod_ch)
+            if (metricsfile_initialized && dockerdpath_initialized && scrapeperiod_initialized)
                 printf("\n== All the configuration variables were updated successfully ==\n");
             else
-                printf("\n== Not all the configuration variables were updated successfully. Uninitialized vars will be set to defaults. ==\n");
-
+            {
+                printf("\nWARNING: Not all the configuration variables were updated successfully.\n The uninitialized vars will be set to defaults.\n");
+                conf_file.close();
+            }
             return cfg;
         }
         catch (const std::exception &err)
         {
             std::cerr << "Reading configuration file [" << filepath.c_str() << "] error occurred: " << err.what() << std::endl;
             printf("\n== Not all the configuration variables were updated successfully. Uninitialized vars will be set to defaults. ==\n");
+            conf_file.close();
             // returns default values
             return config_data();
         }

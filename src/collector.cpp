@@ -31,6 +31,15 @@ Collector::Collector(config_data cfg)
     this->cfg_data.default_metrics_file = cfg.default_metrics_file;
 
     printf("\n== Collector was added ==\n");
+}
+
+Cgroup2Data Collector::collect_host_data()
+{
+    Cgroup2Data host_data;
+
+    // host_data.cgroup2data.
+
+    return host_data;
 };
 
 void Collector::printConfig()
@@ -65,6 +74,11 @@ bool Collector::check_paths()
         std::cerr << ">> /proc path [" << this->net_dev_stat_base_path << "] does not exist" << std::endl;
         return false;
     }
+    if (!fs::exists(this->meminfo_file_path) && fs::is_character_file(this->meminfo_file_path))
+    {
+        std::cerr << ">> MemInfo path [" << this->meminfo_file_path << "] does not exist" << std::endl;
+        return false;
+    }
 
     // Check base path of future file
     fs::path metricsfile_base = fs::path(this->cfg_data.default_metrics_file).parent_path();
@@ -77,6 +91,26 @@ bool Collector::check_paths()
     std::cout << "== All the paths are OK ==" << std::endl;
 
     return true;
+};
+
+bool Collector::set_static_host_info(StaticHostData *host_stats)
+{
+    try
+    {
+        host_stats->vcpus_count = std::thread::hardware_concurrency();
+        host_stats->memory_max = get_meminfo_data(this->meminfo_file_path).mem_total_kB;
+
+        printf("\n== Static host data is collected ==\n");
+        printf(">> VCPUs: %ld\n", host_stats->vcpus_count);
+        printf(">> Total Memory: %ld kB\n", host_stats->memory_max);
+
+        return true;
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << "Error: unable to get the all static host data: " << err.what() << std::endl;
+        return false;
+    }
 };
 
 std::string Collector::get_container_dockerd_full_path(std::string cfid_)
@@ -98,6 +132,8 @@ void Collector::startCollecting()
 
     printf("\n== Starting collector ==\n\n");
 
+    set_static_host_info(&this->static_host_data);
+
     while (!Collector::exit_flag)
     {
 
@@ -105,7 +141,6 @@ void Collector::startCollecting()
         {
 
             // std::cout << "GOT IT: " << this->actual_containers_list.size() << std::endl;
-
         }
         else
         {

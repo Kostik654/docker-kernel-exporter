@@ -11,18 +11,20 @@ private:
     const std::string cgroup_base_path{"/sys/fs/cgroup/system.slice/"};
     const std::string net_dev_stat_base_path{"/proc/"};
     const std::string net_dev_file_rel_path{"/net/dev"};
+    const std::string meminfo_file_path{"/proc/meminfo"};
 
     config_data cfg_data;
+
+    StaticHostData static_host_data;
 
     std::vector<std::string> actual_containers_list;
 
 public:
-
     static bool exit_flag;
 
     Collector(config_data cfg);
 
-    HostData collect_host_data();
+    Cgroup2Data collect_host_data();
     NetworkData collect_process_network_data(size_t pid_);
     Cgroup2Data collect_cgroup2_data(std::string base_path); // host OR container
     ContainerData collect_container_data(std::string cfid_);
@@ -37,6 +39,7 @@ public:
 
     void startCollecting();
     bool check_paths();
+    bool set_static_host_info(StaticHostData *host_stats);
     void printConfig();
     ~Collector();
 };
