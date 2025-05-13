@@ -32,7 +32,7 @@ struct MetricField
     std::string m_unit;
 };
 
-struct ContainerData
+struct ContainerDockerdData
 {
     size_t main_pid;
     std::string name;
@@ -42,7 +42,7 @@ struct ContainerData
 };
 
 // host OR container
-struct Cgroup2Data
+struct Cgroup2StatsData
 {
     size_t cpu_usage_usec;
     size_t cpu_user_usec;
@@ -57,7 +57,7 @@ struct Cgroup2Data
 };
 
 // one process
-struct NetworkData
+struct NetworkStatsData
 {
     size_t rx_bytes;
     size_t tx_bytes;
@@ -68,6 +68,11 @@ struct StaticHostData
 {
     size_t vcpus_count;
     size_t memory_max;
+};
+
+struct HostStatsData
+{
+    MemInfoData memory;
 };
 
 #endif

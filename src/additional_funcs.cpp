@@ -2,6 +2,27 @@
 
 namespace fs = std::filesystem;
 
+bool check_object_path(std::string obj_path, std::string obj_name, bool is_dir)
+{
+    if (is_dir)
+    {
+        if (!(fs::exists(obj_path) && fs::is_directory(obj_path))) {
+            std::cerr << ">> Directory [" << obj_path << "] of object [" << obj_name << "] does not exist" << std::endl;
+            return false;
+        }
+    }
+    else
+    {
+        if (!(fs::exists(obj_path) && fs::is_regular_file(obj_path))) {
+            std::cerr << ">> File [" << obj_path << "] of object [" << obj_name << "] does not exist" << std::endl;
+            return false;
+        }
+    }
+
+    return true;
+
+};
+
 bool update_containers_list(std::string base_path, std::vector<std::string> *list)
 {
 
