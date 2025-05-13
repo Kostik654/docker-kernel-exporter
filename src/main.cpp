@@ -1,9 +1,13 @@
 #include "collector.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-    // Uploading configuration from file
-    config_data confy = upload_config_data();
+    config_data confy;
+
+    if (argc > 1)
+        confy = upload_config_data(argv[1]);
+    else // Uploading configuration from file with the default relative path: ./kernel-de.conf
+        confy = upload_config_data();
 
     std::unique_ptr<Collector> collector1 = std::make_unique<Collector>(confy);
 
@@ -22,7 +26,7 @@ int main()
     // Waiting for completion of second thread
     collection_thread.join();
 
-    printf("Exit code: 0\n");
+    printf("Exit code: %d\n", Collector::exit_code);
 
     return 0;
 }

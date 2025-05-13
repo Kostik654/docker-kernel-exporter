@@ -3,6 +3,7 @@
 namespace fs = std::filesystem;
 
 bool Collector::exit_flag = false;
+unsigned int Collector::exit_code = 0;
 
 Collector::Collector(config_data cfg)
 {
@@ -33,22 +34,23 @@ Collector::Collector(config_data cfg)
     printf("\n== Collector was added ==\n");
 }
 
-Cgroup2Data Collector::collect_host_data()
+HostStatsData Collector::collect_host_data()
 {
-    Cgroup2Data host_data;
+    HostStatsData host_data;
 
-    // host_data.cgroup2data.
+    host_data.memory = get_meminfo_data(this->const_paths.files.host_meminfo_file_path);
+    host_data.cpu = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
 
     return host_data;
-};
+}
 
 void Collector::printConfig()
 {
     printf("\n== Collector configuration BEGIN ==\n");
     printf("Dockerd path: %s\n", this->cfg_data.default_dockerd_base_path.c_str());
-    printf("cgroupv2 path: %s\n", this->cgroup_base_path.c_str());
+    printf("cgroupv2 path: %s\n", this->const_paths.folders.cgroup_base_path.c_str());
     printf("Metrics file path: %s\n", this->cfg_data.default_metrics_file.c_str());
-    printf("Network stats path: %s<container-internal-proc-id>%s\n", this->net_dev_stat_base_path.c_str(), this->net_dev_file_rel_path.c_str());
+    printf("Network stats path: %s<container-internal-proc-id>%s\n", this->const_paths.folders.proc_base_path.c_str(), this->const_paths.files.net_dev_file_rel_path.c_str());
     printf("Scrape period in seconds: %d\n", this->cfg_data.scrape_period);
     printf("== Collector configuration END ==\n");
 };
@@ -59,34 +61,21 @@ bool Collector::check_paths()
     std::cout << "\nChecking paths...\n"
               << std::endl;
 
-    if (!fs::exists(this->cfg_data.default_dockerd_base_path) && fs::is_directory(this->cfg_data.default_dockerd_base_path))
-    {
-        std::cerr << ">> Dockerd path [" << this->cfg_data.default_dockerd_base_path << "] does not exist" << std::endl;
+    // Directories revision
+    if (!(check_object_path(this->cfg_data.default_dockerd_base_path, "Dockerd", true) &&
+          check_object_path(this->const_paths.folders.cgroup_base_path, "cgroup2 base path", true) &&
+          check_object_path(this->const_paths.folders.proc_base_path, "proc base path", true)))
         return false;
-    }
-    if (!fs::exists(this->cgroup_base_path) && fs::is_directory(this->cgroup_base_path))
-    {
-        std::cerr << ">> cgroup2 path [" << this->cgroup_base_path << "] does not exist" << std::endl;
-        return false;
-    }
-    if (!fs::exists(this->net_dev_stat_base_path) && fs::is_directory(this->net_dev_stat_base_path))
-    {
-        std::cerr << ">> /proc path [" << this->net_dev_stat_base_path << "] does not exist" << std::endl;
-        return false;
-    }
-    if (!fs::exists(this->meminfo_file_path) && fs::is_character_file(this->meminfo_file_path))
-    {
-        std::cerr << ">> MemInfo path [" << this->meminfo_file_path << "] does not exist" << std::endl;
-        return false;
-    }
 
-    // Check base path of future file
-    fs::path metricsfile_base = fs::path(this->cfg_data.default_metrics_file).parent_path();
-    if (!fs::exists(metricsfile_base) && fs::is_directory(metricsfile_base))
-    {
-        std::cerr << ">> Metrics file base path [" << metricsfile_base << "] does not exist" << std::endl;
+    // Files revision
+    if (!(check_object_path(this->const_paths.files.host_meminfo_file_path, "MemInfo file path", false) &&
+          check_object_path(this->const_paths.files.host_cpu_stats_file_path, "CPU stat file path", false)))
         return false;
-    }
+
+    // Check base path of future files
+    fs::path metricsfile_base = fs::path(this->cfg_data.default_metrics_file).parent_path();
+    if (!(check_object_path(metricsfile_base, "Metrics file base", true)))
+        return false;
 
     std::cout << "== All the paths are OK ==" << std::endl;
 
@@ -97,10 +86,19 @@ bool Collector::set_static_host_info(StaticHostData *host_stats)
 {
     try
     {
+        // get vcpus count
         host_stats->vcpus_count = std::thread::hardware_concurrency();
-        host_stats->memory_max = get_meminfo_data(this->meminfo_file_path).mem_total_kB;
 
-        printf("\n== Static host data is collected ==\n");
+        // get JUST total memory
+        host_stats->memory_max = get_meminfo_data(this->const_paths.files.host_meminfo_file_path, true).mem_total_kB;
+
+        // get hostname
+        char hostname[HOST_NAME_MAX + 1];
+        gethostname(hostname, HOST_NAME_MAX + 1);
+        host_stats->hostname = hostname;
+
+        // print for log revision
+        printf("\n== Static host [%s] data is collected ==\n", host_stats->hostname.c_str());
         printf(">> VCPUs: %ld\n", host_stats->vcpus_count);
         printf(">> Total Memory: %ld kB\n", host_stats->memory_max);
 
@@ -119,44 +117,68 @@ std::string Collector::get_container_dockerd_full_path(std::string cfid_)
 };
 std::string Collector::get_container_cgroup2_full_path(std::string cfid_)
 {
-    return this->cgroup_base_path + "docker-" + cfid_ + ".scope/";
+    return this->const_paths.folders.cgroup_base_path + "system.slice/docker-" + cfid_ + ".scope/";
 };
 std::string Collector::get_pid_netdev_full_path(std::string cfid_)
 {
-    return this->net_dev_stat_base_path + cfid_ + this->net_dev_file_rel_path;
+    return this->const_paths.folders.proc_base_path + cfid_ + this->const_paths.files.net_dev_file_rel_path;
 };
 
 void Collector::startCollecting()
 {
-    std::string total_data{""};
+    std::string static_data{};
 
     printf("\n== Starting collector ==\n\n");
 
     if (!set_static_host_info(&this->static_host_data))
-        Collector::exit_flag = true;
+    {
+        Collector::exit_code = 100;
+        return;
+    }
 
-    while (!Collector::exit_flag)
+    static_data = get_host_static_metric_fields(this->static_host_data);
+
+    try
     {
 
-        if (update_containers_list(this->cfg_data.default_dockerd_base_path, &this->actual_containers_list))
+        while (!Collector::exit_flag)
         {
 
-            // std::cout << "GOT IT: " << this->actual_containers_list.size() << std::endl;
-        }
-        else
-        {
-            std::cerr << "Unable to get the actual containers ids list in [" << this->cfg_data.default_dockerd_base_path << "] directory" << std::endl;
-            break;
-        }
+            std::string total_data{static_data};
 
-        if (!output_metrics(total_data, this->cfg_data.default_metrics_file))
-        {
-            printf("Collecting was failed\n");
-            break;
-        }
+            total_data += get_host_stats_fields(collect_host_data());
 
-        std::this_thread::sleep_for(std::chrono::seconds(this->cfg_data.scrape_period));
-    };
+            if (update_containers_list(this->cfg_data.default_dockerd_base_path, &this->actual_containers_list))
+            {
+                for (const std::string &container_id : this->actual_containers_list)
+                {
+                    std::string c_cgroup2path = get_container_cgroup2_full_path(container_id);
+                    std::string c_dockerdpath = get_container_dockerd_full_path(container_id);
+                }
+            }
+            else
+            {
+                std::cerr << "Unable to get the actual containers ids list in [" << this->cfg_data.default_dockerd_base_path << "] directory" << std::endl;
+                Collector::exit_code = 101;
+                break;
+            }
+
+            if (!output_metrics(total_data, this->cfg_data.default_metrics_file))
+            {
+                printf("Collecting was failed\n");
+                Collector::exit_code = 102;
+                break;
+            }
+
+            std::this_thread::sleep_for(std::chrono::seconds(this->cfg_data.scrape_period));
+        };
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << "Collecting data error occurred: " << err.what() << std::endl;
+        Collector::exit_code = 103;
+        return;
+    }
 };
 
 Collector::~Collector() {};
