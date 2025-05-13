@@ -73,7 +73,7 @@ bool Collector::check_paths()
         return false;
 
     // Check base path of future files
-    fs::path metricsfile_base = fs::path(this->cfg_data.default_metrics_file).parent_path();
+    std::string metricsfile_base = fs::path(this->cfg_data.default_metrics_file).parent_path().string();
     if (!(check_object_path(metricsfile_base, "Metrics file base", true)))
         return false;
 
