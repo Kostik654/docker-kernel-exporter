@@ -11,6 +11,10 @@
 #include <thread>
 #include <unistd.h>
 #include <limits.h>
+#include <sstream>
+
+// to find numbers
+const std::string num_arr{"0123456789"};
 
 // configuration file
 struct config_data
@@ -39,7 +43,7 @@ struct ConstPaths
         const std::string host_cpu_stats_file_path{"/proc/stat"};
         const std::string net_dev_file_rel_path{"/net/dev"};
     };
-    
+
     ConstFolders folders;
     ConstFiles files;
 };
@@ -55,6 +59,8 @@ struct HostCPUStats
     unsigned int cpu_irq;
     unsigned int cpu_softirq;
     unsigned int cpu_steal;
+    unsigned int cpu_guest;
+    unsigned int cpu_guest_nice;
 
     unsigned int processes_total;
     unsigned int processes_running;

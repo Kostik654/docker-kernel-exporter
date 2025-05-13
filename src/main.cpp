@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 
     if (argc > 1)
         confy = upload_config_data(argv[1]);
-    else // Uploading configuration from file with default path
+    else // Uploading configuration from file with the default relative path: ./kernel-de.conf
         confy = upload_config_data();
 
     std::unique_ptr<Collector> collector1 = std::make_unique<Collector>(confy);

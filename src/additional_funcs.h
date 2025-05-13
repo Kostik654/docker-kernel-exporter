@@ -13,4 +13,6 @@ unsigned int get_meminfo_value(std::string line, std::string var_name);
 MemInfoData get_meminfo_data(std::string filepath, bool just_total = false);
 HostCPUStats get_host_cpu_data(std::string filepath);
 
+float get_container_cpu_usage();
+
 #endif

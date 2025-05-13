@@ -136,7 +136,7 @@ void Collector::startCollecting()
         return;
     }
 
-    static_data = get_host_static_metric_field(this->static_host_data);
+    static_data = get_host_static_metric_fields(this->static_host_data);
 
     try
     {
