@@ -11,6 +11,7 @@
 #include <thread>
 #include <unistd.h>
 
+// configuration file
 struct config_data
 {
     int scrape_period = 3;
@@ -18,6 +19,7 @@ struct config_data
     std::string default_metrics_file{"./metrics.data"};
 };
 
+// host dynamic stats
 struct HostCPUStats 
 {
     unsigned int cpu_user;
@@ -28,12 +30,13 @@ struct HostCPUStats
     unsigned int cpu_irq;
     unsigned int cpu_softirq;
     unsigned int cpu_steal;
-    
+
     unsigned int processes_total;
     unsigned int processes_running;
 
 };
 
+// host dynamic stats + static
 struct MemInfoData
 {
     unsigned int mem_total_kB;
@@ -41,13 +44,16 @@ struct MemInfoData
     unsigned int mem_avail_kB;
 };
 
-struct MetricField
+// common
+struct MetricArgs
 {
     std::string m_name;
     std::string m_description;
     std::string m_unit;
+    std::string m_value;
 };
 
+// container dynamic stats + static
 struct ContainerDockerdData
 {
     size_t main_pid;
@@ -57,7 +63,7 @@ struct ContainerDockerdData
     std::string health_status;
 };
 
-// host OR container
+// container dynamic stats
 struct Cgroup2StatsData
 {
     size_t cpu_usage_usec;
@@ -72,20 +78,21 @@ struct Cgroup2StatsData
     std::vector<size_t> pid_list;
 };
 
-// one process
+// one process dynamic stats
 struct NetworkStatsData
 {
     size_t rx_bytes;
     size_t tx_bytes;
 };
 
-// just host
+// host static info
 struct StaticHostData
 {
     size_t vcpus_count;
     size_t memory_max;
 };
 
+// host dynamic stats
 struct HostStatsData
 {
     MemInfoData memory;

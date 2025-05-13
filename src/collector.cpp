@@ -128,38 +128,51 @@ void Collector::startCollecting()
 
     static_data = get_host_static_metric_field(this->static_host_data);
 
-    while (!Collector::exit_flag)
+    try
     {
 
-        std::string total_data{static_data};
-
-        if (update_containers_list(this->cfg_data.default_dockerd_base_path, &this->actual_containers_list))
+        while (!Collector::exit_flag)
         {
 
-            // std::cout << "GOT IT: " << this->actual_containers_list.size() << std::endl;
+            std::string total_data{static_data};
 
-            for (const std::string &container_id : this->actual_containers_list)
+            // total_data += get_host_cpu_stats_metric_field();
+            // total_data += get_host_memory_stats_metric_field();
+
+            if (update_containers_list(this->cfg_data.default_dockerd_base_path, &this->actual_containers_list))
             {
-                std::string c_cgroup2path = get_container_cgroup2_full_path(container_id);
-                std::string c_dockerdpath = get_container_dockerd_full_path(container_id);
+
+                // std::cout << "GOT IT: " << this->actual_containers_list.size() << std::endl;
+
+                for (const std::string &container_id : this->actual_containers_list)
+                {
+                    std::string c_cgroup2path = get_container_cgroup2_full_path(container_id);
+                    std::string c_dockerdpath = get_container_dockerd_full_path(container_id);
+                }
             }
-        }
-        else
-        {
-            std::cerr << "Unable to get the actual containers ids list in [" << this->cfg_data.default_dockerd_base_path << "] directory" << std::endl;
-            Collector::exit_code = 101;
-            break;
-        }
+            else
+            {
+                std::cerr << "Unable to get the actual containers ids list in [" << this->cfg_data.default_dockerd_base_path << "] directory" << std::endl;
+                Collector::exit_code = 101;
+                break;
+            }
 
-        if (!output_metrics(total_data, this->cfg_data.default_metrics_file))
-        {
-            printf("Collecting was failed\n");
-            Collector::exit_code = 102;
-            break;
-        }
+            if (!output_metrics(total_data, this->cfg_data.default_metrics_file))
+            {
+                printf("Collecting was failed\n");
+                Collector::exit_code = 102;
+                break;
+            }
 
-        std::this_thread::sleep_for(std::chrono::seconds(this->cfg_data.scrape_period));
-    };
+            std::this_thread::sleep_for(std::chrono::seconds(this->cfg_data.scrape_period));
+        };
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << "Collecting data error occurred: " << err.what() << std::endl;
+        Collector::exit_code = 103;
+        return;
+    }
 };
 
 Collector::~Collector() {};
