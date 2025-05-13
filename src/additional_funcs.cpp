@@ -32,11 +32,12 @@ bool update_containers_list(std::string base_path, std::vector<std::string> *lis
 unsigned int get_meminfo_value(std::string line, std::string var_name)
 {
     size_t start = line.find_first_of("0123456789");
-    size_t end = line.find(" kB", start);
+    size_t line_l = line.length();
+    const int postfix_length = 3; // < kB>
 
-    if (start != std::string::npos && end != std::string::npos)
+    if (start != std::string::npos && line_l - postfix_length >= start)
     {
-        return std::stol(line.substr(start, end - start));
+        return std::stol(line.substr(start, line_l - 3));
     }
     else
         throw std::runtime_error("unable to find value for " + var_name);
@@ -67,13 +68,13 @@ MemInfoData get_meminfo_data(std::string filepath)
                 }
                 if (line.find("MemFree") == 0)
                 {
-                    mem_data.mem_total_kB = get_meminfo_value(line, "MemFree");
+                    mem_data.mem_free_kB = get_meminfo_value(line, "MemFree");
                     free_initialized = true;
                     continue;
                 }
                 if (line.find("MemAvailable") == 0)
                 {
-                    mem_data.mem_total_kB = get_meminfo_value(line, "MemAvailable");
+                    mem_data.mem_avail_kB = get_meminfo_value(line, "MemAvailable");
                     avail_initialized = true;
                     continue;
                 }
