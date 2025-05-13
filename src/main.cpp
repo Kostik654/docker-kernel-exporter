@@ -22,7 +22,7 @@ int main()
     // Waiting for completion of second thread
     collection_thread.join();
 
-    printf("Exit code: 0\n");
+    printf("Exit code: %d\n", Collector::exit_code);
 
     return 0;
 }

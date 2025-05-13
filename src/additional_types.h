@@ -18,6 +18,22 @@ struct config_data
     std::string default_metrics_file{"./metrics.data"};
 };
 
+struct HostCPUStats 
+{
+    unsigned int cpu_user;
+    unsigned int cpu_nice;
+    unsigned int cpu_system;
+    unsigned int cpu_idle;
+    unsigned int cpu_iowait;
+    unsigned int cpu_irq;
+    unsigned int cpu_softirq;
+    unsigned int cpu_steal;
+    
+    unsigned int processes_total;
+    unsigned int processes_running;
+
+};
+
 struct MemInfoData
 {
     unsigned int mem_total_kB;
@@ -73,6 +89,7 @@ struct StaticHostData
 struct HostStatsData
 {
     MemInfoData memory;
+    HostCPUStats cpu;
 };
 
 #endif

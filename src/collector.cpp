@@ -3,6 +3,7 @@
 namespace fs = std::filesystem;
 
 bool Collector::exit_flag = false;
+unsigned int Collector::exit_code = 0;
 
 Collector::Collector(config_data cfg)
 {
@@ -115,15 +116,22 @@ std::string Collector::get_pid_netdev_full_path(std::string cfid_)
 
 void Collector::startCollecting()
 {
-    std::string total_data{""};
+    std::string static_data{};
 
     printf("\n== Starting collector ==\n\n");
 
     if (!set_static_host_info(&this->static_host_data))
-        Collector::exit_flag = true;
+    {
+        Collector::exit_code = 100;
+        return;
+    }
+
+    static_data = get_host_static_metric_field(this->static_host_data);
 
     while (!Collector::exit_flag)
     {
+
+        std::string total_data{static_data};
 
         if (update_containers_list(this->cfg_data.default_dockerd_base_path, &this->actual_containers_list))
         {
@@ -139,12 +147,14 @@ void Collector::startCollecting()
         else
         {
             std::cerr << "Unable to get the actual containers ids list in [" << this->cfg_data.default_dockerd_base_path << "] directory" << std::endl;
+            Collector::exit_code = 101;
             break;
         }
 
         if (!output_metrics(total_data, this->cfg_data.default_metrics_file))
         {
             printf("Collecting was failed\n");
+            Collector::exit_code = 102;
             break;
         }
 
