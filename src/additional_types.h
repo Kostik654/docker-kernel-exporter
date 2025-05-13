@@ -10,6 +10,7 @@
 #include <fstream>
 #include <thread>
 #include <unistd.h>
+#include <limits.h>
 
 // configuration file
 struct config_data
@@ -19,8 +20,32 @@ struct config_data
     std::string default_metrics_file{"./metrics.data"};
 };
 
+// constant paths: files and dirs
+struct ConstPaths
+{
+    // constant directories
+    struct ConstFolders
+    {
+
+        const std::string cgroup_base_path{"/sys/fs/cgroup/"};
+        const std::string proc_base_path{"/proc/"};
+    };
+
+    // constant filepaths
+    struct ConstFiles
+    {
+
+        const std::string host_meminfo_file_path{"/proc/meminfo"};
+        const std::string host_cpu_stats_file_path{"/proc/stat"};
+        const std::string net_dev_file_rel_path{"/net/dev"};
+    };
+    
+    ConstFolders folders;
+    ConstFiles files;
+};
+
 // host dynamic stats
-struct HostCPUStats 
+struct HostCPUStats
 {
     unsigned int cpu_user;
     unsigned int cpu_nice;
@@ -33,7 +58,6 @@ struct HostCPUStats
 
     unsigned int processes_total;
     unsigned int processes_running;
-
 };
 
 // host dynamic stats + static
@@ -90,6 +114,7 @@ struct StaticHostData
 {
     size_t vcpus_count;
     size_t memory_max;
+    std::string hostname; // as label
 };
 
 // host dynamic stats

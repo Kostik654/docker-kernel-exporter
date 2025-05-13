@@ -34,22 +34,23 @@ Collector::Collector(config_data cfg)
     printf("\n== Collector was added ==\n");
 }
 
-Cgroup2StatsData Collector::collect_host_data()
+HostStatsData Collector::collect_host_data()
 {
-    Cgroup2StatsData host_data;
+    HostStatsData host_data;
 
-    // host_data.cgroup2data.
+    host_data.memory = get_meminfo_data(this->const_paths.files.host_meminfo_file_path);
+    host_data.cpu = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
 
     return host_data;
-};
+}
 
 void Collector::printConfig()
 {
     printf("\n== Collector configuration BEGIN ==\n");
     printf("Dockerd path: %s\n", this->cfg_data.default_dockerd_base_path.c_str());
-    printf("cgroupv2 path: %s\n", this->cgroup_base_path.c_str());
+    printf("cgroupv2 path: %s\n", this->const_paths.folders.cgroup_base_path.c_str());
     printf("Metrics file path: %s\n", this->cfg_data.default_metrics_file.c_str());
-    printf("Network stats path: %s<container-internal-proc-id>%s\n", this->proc_base_path.c_str(), this->net_dev_file_rel_path.c_str());
+    printf("Network stats path: %s<container-internal-proc-id>%s\n", this->const_paths.folders.proc_base_path.c_str(), this->const_paths.files.net_dev_file_rel_path.c_str());
     printf("Scrape period in seconds: %d\n", this->cfg_data.scrape_period);
     printf("== Collector configuration END ==\n");
 };
@@ -62,13 +63,13 @@ bool Collector::check_paths()
 
     // Directories revision
     if (!(check_object_path(this->cfg_data.default_dockerd_base_path, "Dockerd", true) &&
-          check_object_path(this->cgroup_base_path, "cgroup2 base path", true) &&
-          check_object_path(this->proc_base_path, "proc base path", true)))
+          check_object_path(this->const_paths.folders.cgroup_base_path, "cgroup2 base path", true) &&
+          check_object_path(this->const_paths.folders.proc_base_path, "proc base path", true)))
         return false;
 
     // Files revision
-    if (!(check_object_path(this->host_meminfo_file_path, "MemInfo file path", false) &&
-          check_object_path(this->host_cpu_stats_file_path, "CPU stat file path", false)))
+    if (!(check_object_path(this->const_paths.files.host_meminfo_file_path, "MemInfo file path", false) &&
+          check_object_path(this->const_paths.files.host_cpu_stats_file_path, "CPU stat file path", false)))
         return false;
 
     // Check base path of future files
@@ -85,10 +86,19 @@ bool Collector::set_static_host_info(StaticHostData *host_stats)
 {
     try
     {
+        // get vcpus count
         host_stats->vcpus_count = std::thread::hardware_concurrency();
-        host_stats->memory_max = get_meminfo_data(this->host_meminfo_file_path).mem_total_kB;
 
-        printf("\n== Static host data is collected ==\n");
+        // get JUST total memory
+        host_stats->memory_max = get_meminfo_data(this->const_paths.files.host_meminfo_file_path, true).mem_total_kB;
+
+        // get hostname
+        char hostname[HOST_NAME_MAX + 1];
+        gethostname(hostname, HOST_NAME_MAX + 1);
+        host_stats->hostname = hostname;
+
+        // print for log revision
+        printf("\n== Static host [%s] data is collected ==\n", host_stats->hostname.c_str());
         printf(">> VCPUs: %ld\n", host_stats->vcpus_count);
         printf(">> Total Memory: %ld kB\n", host_stats->memory_max);
 
@@ -107,11 +117,11 @@ std::string Collector::get_container_dockerd_full_path(std::string cfid_)
 };
 std::string Collector::get_container_cgroup2_full_path(std::string cfid_)
 {
-    return this->cgroup_base_path + "system.slice/docker-" + cfid_ + ".scope/";
+    return this->const_paths.folders.cgroup_base_path + "system.slice/docker-" + cfid_ + ".scope/";
 };
 std::string Collector::get_pid_netdev_full_path(std::string cfid_)
 {
-    return this->proc_base_path + cfid_ + this->net_dev_file_rel_path;
+    return this->const_paths.folders.proc_base_path + cfid_ + this->const_paths.files.net_dev_file_rel_path;
 };
 
 void Collector::startCollecting()
@@ -136,14 +146,10 @@ void Collector::startCollecting()
 
             std::string total_data{static_data};
 
-            // total_data += get_host_cpu_stats_metric_field();
-            // total_data += get_host_memory_stats_metric_field();
+            total_data += get_host_stats_fields(collect_host_data());
 
             if (update_containers_list(this->cfg_data.default_dockerd_base_path, &this->actual_containers_list))
             {
-
-                // std::cout << "GOT IT: " << this->actual_containers_list.size() << std::endl;
-
                 for (const std::string &container_id : this->actual_containers_list)
                 {
                     std::string c_cgroup2path = get_container_cgroup2_full_path(container_id);

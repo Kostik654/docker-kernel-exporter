@@ -6,21 +6,22 @@ bool check_object_path(std::string obj_path, std::string obj_name, bool is_dir)
 {
     if (is_dir)
     {
-        if (!(fs::exists(obj_path) && fs::is_directory(obj_path))) {
+        if (!(fs::exists(obj_path) && fs::is_directory(obj_path)))
+        {
             std::cerr << ">> Directory [" << obj_path << "] of object [" << obj_name << "] does not exist" << std::endl;
             return false;
         }
     }
     else
     {
-        if (!(fs::exists(obj_path) && fs::is_regular_file(obj_path))) {
+        if (!(fs::exists(obj_path) && fs::is_regular_file(obj_path)))
+        {
             std::cerr << ">> File [" << obj_path << "] of object [" << obj_name << "] does not exist" << std::endl;
             return false;
         }
     }
 
     return true;
-
 };
 
 bool update_containers_list(std::string base_path, std::vector<std::string> *list)
@@ -64,7 +65,7 @@ unsigned int get_meminfo_value(std::string line, std::string var_name)
         throw std::runtime_error("unable to find value for " + var_name);
 }
 
-MemInfoData get_meminfo_data(std::string filepath)
+MemInfoData get_meminfo_data(std::string filepath, bool just_total)
 {
     MemInfoData mem_data;
 
@@ -85,15 +86,19 @@ MemInfoData get_meminfo_data(std::string filepath)
                 {
                     mem_data.mem_total_kB = get_meminfo_value(line, "MemTotal");
                     total_initialized = true;
-                    continue;
+
+                    if (just_total)
+                        break;
+                    else
+                        continue;
                 }
-                if (line.find("MemFree") == 0)
+                if (line.find("MemFree") == 0 && !just_total)
                 {
                     mem_data.mem_free_kB = get_meminfo_value(line, "MemFree");
                     free_initialized = true;
                     continue;
                 }
-                if (line.find("MemAvailable") == 0)
+                if (line.find("MemAvailable") == 0 && !just_total)
                 {
                     mem_data.mem_avail_kB = get_meminfo_value(line, "MemAvailable");
                     avail_initialized = true;
@@ -106,7 +111,7 @@ MemInfoData get_meminfo_data(std::string filepath)
 
             meminfo_file.close();
 
-            if (!(total_initialized && free_initialized && avail_initialized))
+            if (!(total_initialized && free_initialized && avail_initialized) && !(just_total && total_initialized))
                 throw std::runtime_error("one or more parameters was not foud!");
         }
         catch (const std::exception &err)
@@ -119,6 +124,11 @@ MemInfoData get_meminfo_data(std::string filepath)
     }
 
     return mem_data;
+}
+
+HostCPUStats get_host_cpu_data(std::string filepath)
+{
+    return HostCPUStats();
 }
 
 bool output_metrics(std::string content, std::string filepath)

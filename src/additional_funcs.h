@@ -10,6 +10,7 @@ bool check_object_path(std::string obj_path, std::string obj_name, bool is_dir);
 
 unsigned int get_meminfo_value(std::string line, std::string var_name);
 
-MemInfoData get_meminfo_data(std::string filepath);
+MemInfoData get_meminfo_data(std::string filepath, bool just_total = false);
+HostCPUStats get_host_cpu_data(std::string filepath);
 
 #endif

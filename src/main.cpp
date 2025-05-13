@@ -1,9 +1,13 @@
 #include "collector.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-    // Uploading configuration from file
-    config_data confy = upload_config_data();
+    config_data confy;
+
+    if (argc > 1)
+        confy = upload_config_data(argv[1]);
+    else // Uploading configuration from file with default path
+        confy = upload_config_data();
 
     std::unique_ptr<Collector> collector1 = std::make_unique<Collector>(confy);
 

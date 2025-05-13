@@ -7,13 +7,10 @@ class Collector
 {
 
 private:
+
     const std::string collector_version_info{"Collector version 1.0.0, using cgroups2"};
 
-    const std::string cgroup_base_path{"/sys/fs/cgroup/"};
-    const std::string proc_base_path{"/proc/"};
-    const std::string net_dev_file_rel_path{"/net/dev"};
-    const std::string host_meminfo_file_path{"/proc/meminfo"};
-    const std::string host_cpu_stats_file_path{"/proc/stat"};
+    const ConstPaths const_paths;
 
     config_data cfg_data;
 
@@ -27,7 +24,7 @@ public:
 
     Collector(config_data cfg);
 
-    Cgroup2StatsData collect_host_data(); // host dynamic stats
+    HostStatsData collect_host_data(); // host dynamic stats
 
 
     NetworkStatsData collect_process_network_data(size_t pid_, std::string if_name); // any proccess
