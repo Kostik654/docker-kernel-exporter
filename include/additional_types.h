@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <sstream>
+#include <regex>
 
 // to find numbers
 const std::string num_arr{"0123456789"};
@@ -42,6 +43,7 @@ struct ConstPaths
         const std::string host_meminfo_file_path{"/proc/meminfo"};
         const std::string host_cpu_stats_file_path{"/proc/stat"};
         const std::string net_dev_file_rel_path{"/net/dev"};
+        const std::string json_config_filename{"config.v2.json"};
     };
 
     ConstFolders folders;
@@ -88,8 +90,7 @@ struct ContainerDockerdData
 {
     size_t main_pid;
     std::string name;
-    std::string run_state;
-    std::string command;
+    // std::string command;
     std::string health_status;
     bool is_running;
 

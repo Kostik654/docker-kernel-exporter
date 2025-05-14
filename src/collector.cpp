@@ -48,7 +48,7 @@ ContainerStatsData Collector::collect_container_data(std::string c_id)
 {
     ContainerStatsData c_total_data;
     
-    c_total_data.json_stats = get_container_json_data(get_container_dockerd_full_path(c_id));
+    c_total_data.json_stats = get_container_json_data(get_container_dockerd_full_path(c_id) + this->const_paths.files.json_config_filename);
 
     if (c_total_data.json_stats.is_running) {
         c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id));
@@ -75,6 +75,9 @@ bool Collector::check_paths()
               << std::endl;
 
     // Directories revision
+    if (this->cfg_data.default_dockerd_base_path.back() != '/')
+        this->cfg_data.default_dockerd_base_path += '/';
+
     if (!(check_object_path(this->cfg_data.default_dockerd_base_path, "Dockerd", true) &&
           check_object_path(this->const_paths.folders.cgroup_base_path, "cgroup2 base path", true) &&
           check_object_path(this->const_paths.folders.proc_base_path, "proc base path", true)))
@@ -165,7 +168,7 @@ void Collector::startCollecting()
             {
                 for (const std::string &container_id : this->actual_containers_list)
                 {
-                    total_data += get_container_stats_fields(collect_container_data(container_id));
+                    total_data += get_container_stats_fields(collect_container_data(container_id), container_id);
                 }
             }
             else

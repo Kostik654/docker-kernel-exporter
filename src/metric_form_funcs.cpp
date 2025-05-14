@@ -23,14 +23,16 @@ std::string get_host_stats_fields(HostStatsData host_data)
     return total_fields;
 }
 
-std::string get_container_stats_fields(ContainerStatsData c_data)
+std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_id)
 {
     std::string total_fields{""};
 
+    printf("\n\nContainer %s\nNAME: %s\n", c_id.c_str(), c_data.json_stats.name.c_str());
+    printf("Health data: %s\n", c_data.json_stats.health_status.c_str());
 
-
-    if (c_data.json_stats.is_running) {
-
+    if (c_data.json_stats.is_running)
+    {
+        printf("Container is running\n");
     }
 
     return total_fields;

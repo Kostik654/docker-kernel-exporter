@@ -14,6 +14,6 @@ std::string get_host_stats_fields(HostStatsData host_data);
 
 std::string get_container_metric_field(MetricArgs base_args, std::string c_name, std::string c_id, std::string c_state);
 // agregation method of container metrics
-std::string get_container_stats_fields(ContainerStatsData c_data);
+std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_id);
 
 #endif

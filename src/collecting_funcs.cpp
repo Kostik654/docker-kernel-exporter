@@ -1,5 +1,4 @@
 #include "collecting_funcs.h"
-#include "additional_types.h"
 
 namespace fs = std::filesystem;
 
@@ -135,13 +134,15 @@ HostCPUStats get_host_cpu_data(std::string filepath)
             // cpu  289596 603 78161 4257920 11095 0 839 0 0 0
             while (std::getline(cpu_file, line))
             {
-                if (line.find("cpu ") == 0 && is_first_line)
+
+                std::istringstream stream(line);
+                std::string val_;
+
+                stream >> val_;
+
+                if (val_ == "cpu" && is_first_line)
                 {
                     is_first_line = false;
-                    line = line.substr(line.find_first_of(num_arr));
-
-                    std::istringstream stream(line);
-                    std::string val_;
 
                     // access template
                     unsigned int HostCPUStats::*cpu_stat_fields[] = {
@@ -168,15 +169,17 @@ HostCPUStats get_host_cpu_data(std::string filepath)
                     stats_initialized = true;
                     continue;
                 }
-                if (line.find("processes ") == 0)
+                if (val_ == "processes")
                 {
-                    host_stats.processes_total = std::stoi(line.substr(line.find_first_of(num_arr)));
+                    stream >> val_;
+                    host_stats.processes_total = std::stoi(val_);
                     procs_initialized = true;
                     continue;
                 }
-                if (line.find("procs_running ") == 0)
+                if (val_ == "procs_running")
                 {
-                    host_stats.processes_running = std::stoi(line.substr(line.find_first_of(num_arr)));
+                    stream >> val_;
+                    host_stats.processes_running = std::stoi(val_);
                     rprocs_initialized = true;
                     continue;
                 }
@@ -202,4 +205,79 @@ HostCPUStats get_host_cpu_data(std::string filepath)
     }
 
     return host_stats;
+}
+
+ContainerDockerdData get_container_json_data(std::string filepath)
+{
+    ContainerDockerdData c_js_stats;
+
+    std::ifstream json_file(filepath);
+    std::string line;
+
+    std::regex pid_look_temp(R"("Pid":(\d+))");
+    std::regex name_look_temp(R"xxx("Name":"([^"]+)")xxx");
+    std::regex health_look_temp(R"xxx("Health"\s*:\s*\{[^{]*"Status"\s*:\s*"([^"]+))xxx");
+    std::smatch match;
+
+    try
+    {
+        if (json_file.is_open())
+        {
+            // raw json line
+            getline(json_file, line);
+
+            // Name parsing
+            if (std::regex_search(line, match, name_look_temp))
+                c_js_stats.name = std::string(match[1]).substr(1); // Name value without < / > char
+            else
+                throw std::runtime_error("<Name> was not found");
+
+            // Pid parsing
+            if (std::regex_search(line, match, pid_look_temp))
+                c_js_stats.main_pid = std::stoi(match[1]);
+            else
+                throw std::runtime_error("<Pid> was not found");
+
+            // Running status parsing
+            if (line.find("{\"Running\":true,") != std::string::npos)
+                c_js_stats.is_running = true;
+            else if (line.find("{\"Running\":false,") != std::string::npos)
+                c_js_stats.is_running = false;
+            else
+                throw std::runtime_error("<Running> was not found");
+
+            // Health status parsing if exists
+            // if (line.find("\"Health\":null") != std::string::npos)
+            //     c_js_stats.health_status = "null";
+            // else 
+            if (std::regex_search(line, match, health_look_temp))
+                c_js_stats.health_status = match[1];
+            else
+                c_js_stats.health_status = "null";
+                //throw std::runtime_error("<Health> was not found");
+        }
+        else
+            throw std::runtime_error("unable to open file");
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << "Reading container json file [" << filepath.c_str() << "] error occurred: " << err.what() << std::endl;
+        json_file.close();
+        exit(3);
+    }
+    return c_js_stats;
+}
+
+Cgroup2StatsData get_container_cgroup_data(std::string filepath)
+{
+    Cgroup2StatsData c_cg2_stats;
+
+    return c_cg2_stats;
+}
+
+NetworkStatsData get_process_network_data(std::string filepath, size_t pid_, std::string if_name)
+{
+    NetworkStatsData c_net_stats;
+
+    return c_net_stats;
 }
