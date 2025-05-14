@@ -51,19 +51,19 @@ bool update_containers_list(std::string base_path, std::vector<std::string> *lis
     }
 }
 
-unsigned int get_meminfo_value(std::string line, std::string var_name)
-{
-    size_t start = line.find_first_of(num_arr);
-    size_t line_l = line.length();
-    const int postfix_length = 3; // < kB>
+// unsigned int get_meminfo_value(std::string line, std::string var_name)
+// {
+//     size_t start = line.find_first_of(num_arr);
+//     size_t line_l = line.length();
+//     const int postfix_length = 3; // < kB>
 
-    if (start != std::string::npos && line_l - postfix_length >= start)
-    {
-        return std::stol(line.substr(start, line_l - 3));
-    }
-    else
-        throw std::runtime_error("unable to find value for " + var_name);
-}
+//     if (start != std::string::npos && line_l - postfix_length >= start)
+//     {
+//         return std::stol(line.substr(start, line_l - 3));
+//     }
+//     else
+//         throw std::runtime_error("unable to find value for " + var_name);
+// }
 
 MemInfoData get_meminfo_data(std::string filepath, bool just_total)
 {
@@ -83,9 +83,15 @@ MemInfoData get_meminfo_data(std::string filepath, bool just_total)
 
             while (std::getline(meminfo_file, line))
             {
-                if (line.find("MemTotal") == 0)
+                std::istringstream stream(line);
+                std::string val_;
+
+                stream >> val_;
+
+                if (val_ == "MemTotal:")
                 {
-                    mem_data.mem_total_kB = get_meminfo_value(line, "MemTotal");
+                    stream >> val_;
+                    mem_data.mem_total_kB = std::stoi(val_);
                     total_initialized = true;
 
                     if (just_total)
@@ -93,15 +99,17 @@ MemInfoData get_meminfo_data(std::string filepath, bool just_total)
                     else
                         continue;
                 }
-                if (line.find("MemFree") == 0 && !just_total)
+                if (val_ == "MemFree:" && !just_total)
                 {
-                    mem_data.mem_free_kB = get_meminfo_value(line, "MemFree");
+                    stream >> val_;
+                    mem_data.mem_free_kB = std::stoi(val_);
                     free_initialized = true;
                     continue;
                 }
-                if (line.find("MemAvailable") == 0 && !just_total)
+                if (val_ == "MemAvailable:" && !just_total)
                 {
-                    mem_data.mem_avail_kB = get_meminfo_value(line, "MemAvailable");
+                    stream >> val_;
+                    mem_data.mem_avail_kB = std::stoi(val_);
                     avail_initialized = true;
                     continue;
                 }
@@ -156,26 +164,25 @@ HostCPUStats get_host_cpu_data(std::string filepath)
                     std::istringstream stream(line);
                     std::string val_;
 
-                    stream >> val_;
-                    host_stats.cpu_user = std::stoi(val_);
-                    stream >> val_;
-                    host_stats.cpu_nice = std::stoi(val_);
-                    stream >> val_;
-                    host_stats.cpu_system = std::stoi(val_);
-                    stream >> val_;
-                    host_stats.cpu_idle = std::stoi(val_);
-                    stream >> val_;
-                    host_stats.cpu_iowait = std::stoi(val_);
-                    stream >> val_;
-                    host_stats.cpu_irq = std::stoi(val_);
-                    stream >> val_;
-                    host_stats.cpu_softirq = std::stoi(val_);
-                    stream >> val_;
-                    host_stats.cpu_steal = std::stoi(val_);
-                    stream >> val_;
-                    host_stats.cpu_guest = std::stoi(val_);
-                    stream >> val_;
-                    host_stats.cpu_guest_nice = std::stoi(val_);
+                    unsigned int HostCPUStats::*fields[] = {
+                        &HostCPUStats::cpu_user,
+                        &HostCPUStats::cpu_nice,
+                        &HostCPUStats::cpu_system,
+                        &HostCPUStats::cpu_idle,
+                        &HostCPUStats::cpu_iowait,
+                        &HostCPUStats::cpu_irq,
+                        &HostCPUStats::cpu_softirq,
+                        &HostCPUStats::cpu_steal,
+                        &HostCPUStats::cpu_guest,
+                        &HostCPUStats::cpu_guest_nice};
+
+                    for (unsigned int HostCPUStats::* field : fields)
+                    {
+                        if (!(stream >> val_))
+                            break;
+                        else
+                            host_stats.*field = std::stoi(val_);
+                    };
 
                     stats_initialized = true;
 
@@ -196,6 +203,9 @@ HostCPUStats get_host_cpu_data(std::string filepath)
                 if (procs_initialized && rprocs_initialized && stats_initialized)
                     break;
             }
+
+            cpu_file.close();
+
             if (!(procs_initialized && rprocs_initialized && stats_initialized))
                 throw std::runtime_error("not all stats were found");
             else
@@ -207,6 +217,7 @@ HostCPUStats get_host_cpu_data(std::string filepath)
     catch (const std::exception &err)
     {
         std::cerr << "Reading cpu stats file [" << filepath.c_str() << "] error occurred: " << err.what() << std::endl;
+        cpu_file.close();
         exit(3);
     }
 
