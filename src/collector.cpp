@@ -38,10 +38,23 @@ HostStatsData Collector::collect_host_data()
 {
     HostStatsData host_data;
 
-    host_data.memory = get_meminfo_data(this->const_paths.files.host_meminfo_file_path);
+    host_data.memory = get_host_meminfo_data(this->const_paths.files.host_meminfo_file_path);
     host_data.cpu = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
 
     return host_data;
+}
+
+ContainerStatsData Collector::collect_container_data(std::string c_id)
+{
+    ContainerStatsData c_total_data;
+    
+    c_total_data.json_stats = get_container_json_data(get_container_dockerd_full_path(c_id));
+
+    if (c_total_data.json_stats.is_running) {
+        c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id));
+    }
+
+    return c_total_data;
 }
 
 void Collector::printConfig()
@@ -90,7 +103,7 @@ bool Collector::set_static_host_info(StaticHostData *host_stats)
         host_stats->vcpus_count = std::thread::hardware_concurrency();
 
         // get JUST total memory
-        host_stats->memory_max = get_meminfo_data(this->const_paths.files.host_meminfo_file_path, true).mem_total_kB;
+        host_stats->memory_max = get_host_meminfo_data(this->const_paths.files.host_meminfo_file_path, true).mem_total_kB;
 
         // get hostname
         char hostname[HOST_NAME_MAX + 1];
@@ -144,7 +157,7 @@ void Collector::startCollecting()
         while (!Collector::exit_flag)
         {
 
-            std::string total_data{static_data};
+            std::string total_data{static_data}; // start var with static host data
 
             total_data += get_host_stats_fields(collect_host_data());
 
@@ -152,8 +165,7 @@ void Collector::startCollecting()
             {
                 for (const std::string &container_id : this->actual_containers_list)
                 {
-                    std::string c_cgroup2path = get_container_cgroup2_full_path(container_id);
-                    std::string c_dockerdpath = get_container_dockerd_full_path(container_id);
+                    total_data += get_container_stats_fields(collect_container_data(container_id));
                 }
             }
             else

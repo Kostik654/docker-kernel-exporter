@@ -6,9 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(SOURCES
     src/main.cpp
-    src/additional_funcs.cpp
+    src/filesystem_funcs.cpp
     src/collector.cpp
+    src/collecting_funcs.cpp
     src/metric_calc_funcs.cpp
+    src/metric_form_funcs.cpp
 )
 
 add_executable(kernel-de ${SOURCES})

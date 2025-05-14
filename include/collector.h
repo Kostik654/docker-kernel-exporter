@@ -1,7 +1,8 @@
 #ifndef COLLECTOR_H
 #define COLLECTOR_H
-#include "additional_funcs.h"
-#include "metric_calc_funcs.h"
+#include "filesystem_funcs.h"
+#include "metric_form_funcs.h"
+#include "collecting_funcs.h"
 
 class Collector
 {
@@ -24,10 +25,7 @@ public:
     Collector(config_data cfg);
 
     HostStatsData collect_host_data(); // host dynamic stats
-
-    NetworkStatsData collect_process_network_data(size_t pid_, std::string if_name); // any proccess
-    Cgroup2StatsData collect_cgroup2_data(std::string base_path);                    // host OR container
-    ContainerDockerdData collect_container_data(std::string cfid_);                  // from dockerd jsons
+    ContainerStatsData collect_container_data(std::string c_id); // container dynamic stats + json static
 
     std::string get_container_dockerd_full_path(std::string cfid_);
     std::string get_container_cgroup2_full_path(std::string cfid_);

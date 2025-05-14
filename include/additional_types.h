@@ -91,14 +91,23 @@ struct ContainerDockerdData
     std::string run_state;
     std::string command;
     std::string health_status;
+    bool is_running;
+
 };
 
 // container dynamic stats
 struct Cgroup2StatsData
 {
-    size_t cpu_usage_usec;
-    size_t cpu_user_usec;
-    size_t cpu_system_usec;
+    unsigned int pu_usage_usec;
+    unsigned int cpu_user_usec;
+    unsigned int cpu_system_usec;
+    unsigned int nice_usec;
+    unsigned int core_sched_force_idle_usec;
+    unsigned int nr_periods;
+    unsigned int nr_throttled;
+    unsigned int throttled_usec;
+    unsigned int nr_bursts;
+    unsigned int burst_usec;
 
     size_t memory_current;
 
@@ -128,6 +137,12 @@ struct HostStatsData
 {
     MemInfoData memory;
     HostCPUStats cpu;
+};
+
+struct ContainerStatsData
+{
+    ContainerDockerdData json_stats;
+    Cgroup2StatsData resource_stats;
 };
 
 #endif
