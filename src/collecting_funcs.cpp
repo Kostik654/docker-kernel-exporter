@@ -363,7 +363,7 @@ Cgroup2StatsData get_container_cgroup_data(std::string filepath)
 
 NetworkStatsData get_process_network_data(std::string filepath)
 {
-    NetworkStatsData c_net_stats;
+    NetworkStatsData c_net_stats{0, 0};
 
     std::ifstream dev_file(filepath);
     std::string line;
@@ -379,13 +379,19 @@ NetworkStatsData get_process_network_data(std::string filepath)
 
             while (getline(dev_file, line)) // ifaces lines
             {
+                //printf("%s dev %s", filepath.c_str(), line.substr(0, 6).c_str());
+
                 line = line.substr(line.find(':') + 2); // skip iface name
                 std::istringstream stream(line);
                 stream >> val_; // bytes received
+
+                //printf(" received %s", val_.c_str());
+
                 c_net_stats.rx_bytes += std::stoi(val_);
                 for (int i = 0; i < 7; i++)
                     stream >> val_; // skip info from 7 columns
-                stream >> val_; // bytes transmitted
+                stream >> val_;     // bytes transmitted
+                //printf(" trans %s\n", val_.c_str());
                 c_net_stats.tx_bytes += std::stoi(val_);
             }
         }
@@ -413,6 +419,7 @@ NetworkStatsData get_processes_sum_network_data(std::vector<std::string> pid_lis
         NetworkStatsData pid_stats = get_process_network_data(get_pid_netdev_full_path(pid_));
         c_net_stats_sum.rx_bytes += pid_stats.rx_bytes;
         c_net_stats_sum.tx_bytes += pid_stats.tx_bytes;
+        // std::cout << "Pid Total rx = " << c_net_stats_sum.rx_bytes << " tx" << c_net_stats_sum.tx_bytes << std::endl;
     }
 
     return c_net_stats_sum;
