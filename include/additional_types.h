@@ -50,6 +50,21 @@ struct ConstPaths
     ConstFiles files;
 };
 
+// container dynamic stats
+struct ContainerCPUStats
+{
+    unsigned int cpu_usage_usec;
+    unsigned int cpu_user_usec;
+    unsigned int cpu_system_usec;
+    unsigned int nice_usec;
+    unsigned int core_sched_force_idle_usec;
+    unsigned int nr_periods;
+    unsigned int nr_throttled;
+    unsigned int throttled_usec;
+    unsigned int nr_bursts;
+    unsigned int burst_usec;
+};
+
 // host dynamic stats
 struct HostCPUStats
 {
@@ -93,29 +108,29 @@ struct ContainerDockerdData
     // std::string command;
     std::string health_status;
     bool is_running;
+};
 
+// container dynamic stats
+struct ContainerMemoryStats
+{
+    size_t memory_current;
+    size_t memory_swap_current;
+};
+
+// container dynamic stats
+struct ContainerIOStats
+{
+    std::string io_rbytes;
+    std::string io_wbytes;
 };
 
 // container dynamic stats
 struct Cgroup2StatsData
 {
-    unsigned int pu_usage_usec;
-    unsigned int cpu_user_usec;
-    unsigned int cpu_system_usec;
-    unsigned int nice_usec;
-    unsigned int core_sched_force_idle_usec;
-    unsigned int nr_periods;
-    unsigned int nr_throttled;
-    unsigned int throttled_usec;
-    unsigned int nr_bursts;
-    unsigned int burst_usec;
-
-    size_t memory_current;
-
-    size_t io_rbytes;
-    size_t io_wbytes;
-
-    std::vector<size_t> pid_list;
+    ContainerCPUStats cpu_stats;
+    ContainerMemoryStats mem_stats;
+    ContainerIOStats io_stats;
+    std::vector<std::string> pid_list;
 };
 
 // one process dynamic stats
@@ -144,6 +159,7 @@ struct ContainerStatsData
 {
     ContainerDockerdData json_stats;
     Cgroup2StatsData resource_stats;
+    NetworkStatsData net_stats;
 };
 
 #endif

@@ -22,6 +22,56 @@ bool check_object_path(std::string obj_path, std::string obj_name, bool is_dir)
     }
 
     return true;
+}
+
+std::string read_file_line(std::string filepath)
+{
+    std::ifstream t_file(filepath);
+    std::string line;
+    try
+    {
+        if (t_file.is_open())
+        {
+            getline(t_file, line);
+        }
+        else
+            throw std::runtime_error("unable to open file");
+        t_file.close();
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << "Reading file line [" << filepath.c_str() << "] error occurred: " << err.what() << std::endl;
+        if (t_file.is_open())
+            t_file.close();
+        exit(303);
+    }
+    return line;
+};
+
+std::vector<std::string> read_file_lines(std::string filepath)
+{
+    std::ifstream t_file(filepath);
+    std::string line;
+    std::vector<std::string> lines;
+    try
+    {
+        if (t_file.is_open())
+        {
+            while (getline(t_file, line))
+                lines.push_back(line);
+        }
+        else
+            throw std::runtime_error("unable to open file");
+        t_file.close();
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << "Reading file lines [" << filepath.c_str() << "] error occurred: " << err.what() << std::endl;
+        if (t_file.is_open())
+            t_file.close();
+        exit(304);
+    }
+    return lines;
 };
 
 bool output_metrics(std::string content, std::string filepath)

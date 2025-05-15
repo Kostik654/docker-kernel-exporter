@@ -52,6 +52,7 @@ ContainerStatsData Collector::collect_container_data(std::string c_id)
 
     if (c_total_data.json_stats.is_running) {
         c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id));
+        c_total_data.net_stats = get_processes_sum_network_data(c_total_data.resource_stats.pid_list);
     }
 
     return c_total_data;
@@ -134,10 +135,6 @@ std::string Collector::get_container_dockerd_full_path(std::string cfid_)
 std::string Collector::get_container_cgroup2_full_path(std::string cfid_)
 {
     return this->const_paths.folders.cgroup_base_path + "system.slice/docker-" + cfid_ + ".scope/";
-};
-std::string Collector::get_pid_netdev_full_path(std::string cfid_)
-{
-    return this->const_paths.folders.proc_base_path + cfid_ + this->const_paths.files.net_dev_file_rel_path;
 };
 
 void Collector::startCollecting()

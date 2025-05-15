@@ -29,7 +29,6 @@ public:
 
     std::string get_container_dockerd_full_path(std::string cfid_);
     std::string get_container_cgroup2_full_path(std::string cfid_);
-    std::string get_pid_netdev_full_path(std::string cfid_);
 
     void startCollecting();
 
