@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <sstream>
+#include <regex>
 
 // to find numbers
 const std::string num_arr{"0123456789"};
@@ -42,10 +43,26 @@ struct ConstPaths
         const std::string host_meminfo_file_path{"/proc/meminfo"};
         const std::string host_cpu_stats_file_path{"/proc/stat"};
         const std::string net_dev_file_rel_path{"/net/dev"};
+        const std::string json_config_filename{"config.v2.json"};
     };
 
     ConstFolders folders;
     ConstFiles files;
+};
+
+// container dynamic stats
+struct ContainerCPUStats
+{
+    unsigned int cpu_usage_usec;
+    unsigned int cpu_user_usec;
+    unsigned int cpu_system_usec;
+    unsigned int nice_usec;
+    unsigned int core_sched_force_idle_usec;
+    unsigned int nr_periods;
+    unsigned int nr_throttled;
+    unsigned int throttled_usec;
+    unsigned int nr_bursts;
+    unsigned int burst_usec;
 };
 
 // host dynamic stats
@@ -88,24 +105,32 @@ struct ContainerDockerdData
 {
     size_t main_pid;
     std::string name;
-    std::string run_state;
-    std::string command;
+    // std::string command;
     std::string health_status;
+    bool is_running;
+};
+
+// container dynamic stats
+struct ContainerMemoryStats
+{
+    size_t memory_current;
+    size_t memory_swap_current;
+};
+
+// container dynamic stats
+struct ContainerIOStats
+{
+    std::string io_rbytes;
+    std::string io_wbytes;
 };
 
 // container dynamic stats
 struct Cgroup2StatsData
 {
-    size_t cpu_usage_usec;
-    size_t cpu_user_usec;
-    size_t cpu_system_usec;
-
-    size_t memory_current;
-
-    size_t io_rbytes;
-    size_t io_wbytes;
-
-    std::vector<size_t> pid_list;
+    ContainerCPUStats cpu_stats;
+    ContainerMemoryStats mem_stats;
+    ContainerIOStats io_stats;
+    std::vector<std::string> pid_list;
 };
 
 // one process dynamic stats
@@ -128,6 +153,13 @@ struct HostStatsData
 {
     MemInfoData memory;
     HostCPUStats cpu;
+};
+
+struct ContainerStatsData
+{
+    ContainerDockerdData json_stats;
+    Cgroup2StatsData resource_stats;
+    NetworkStatsData net_stats;
 };
 
 #endif

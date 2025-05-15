@@ -1,0 +1,17 @@
+[Unit]
+Description=Docker Kernel Exporter's Collector Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/lib/kde-collector
+ExecStart=/usr/local/bin/kde-collector /etc/kernel-de/kernel-de.conf
+Restart=on-failure
+RestartSec=5
+ExecStartPre=!/bin/mkdir -p /var/lib/kde-collector || true
+StandardOutput=append:/var/log/kde-collector.log
+StandardError=append:/var/log/kde-collector.log
+
+[Install]
+WantedBy=multi-user.target

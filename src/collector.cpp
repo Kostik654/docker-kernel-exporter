@@ -38,10 +38,24 @@ HostStatsData Collector::collect_host_data()
 {
     HostStatsData host_data;
 
-    host_data.memory = get_meminfo_data(this->const_paths.files.host_meminfo_file_path);
+    host_data.memory = get_host_meminfo_data(this->const_paths.files.host_meminfo_file_path);
     host_data.cpu = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
 
     return host_data;
+}
+
+ContainerStatsData Collector::collect_container_data(std::string c_id)
+{
+    ContainerStatsData c_total_data;
+    
+    c_total_data.json_stats = get_container_json_data(get_container_dockerd_full_path(c_id) + this->const_paths.files.json_config_filename);
+
+    if (c_total_data.json_stats.is_running) {
+        c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id));
+        c_total_data.net_stats = get_processes_sum_network_data(c_total_data.resource_stats.pid_list);
+    }
+
+    return c_total_data;
 }
 
 void Collector::printConfig()
@@ -62,6 +76,9 @@ bool Collector::check_paths()
               << std::endl;
 
     // Directories revision
+    if (this->cfg_data.default_dockerd_base_path.back() != '/')
+        this->cfg_data.default_dockerd_base_path += '/';
+
     if (!(check_object_path(this->cfg_data.default_dockerd_base_path, "Dockerd", true) &&
           check_object_path(this->const_paths.folders.cgroup_base_path, "cgroup2 base path", true) &&
           check_object_path(this->const_paths.folders.proc_base_path, "proc base path", true)))
@@ -73,7 +90,7 @@ bool Collector::check_paths()
         return false;
 
     // Check base path of future files
-    fs::path metricsfile_base = fs::path(this->cfg_data.default_metrics_file).parent_path();
+    std::string metricsfile_base = fs::path(this->cfg_data.default_metrics_file).parent_path().string();
     if (!(check_object_path(metricsfile_base, "Metrics file base", true)))
         return false;
 
@@ -90,7 +107,7 @@ bool Collector::set_static_host_info(StaticHostData *host_stats)
         host_stats->vcpus_count = std::thread::hardware_concurrency();
 
         // get JUST total memory
-        host_stats->memory_max = get_meminfo_data(this->const_paths.files.host_meminfo_file_path, true).mem_total_kB;
+        host_stats->memory_max = get_host_meminfo_data(this->const_paths.files.host_meminfo_file_path, true).mem_total_kB;
 
         // get hostname
         char hostname[HOST_NAME_MAX + 1];
@@ -119,10 +136,6 @@ std::string Collector::get_container_cgroup2_full_path(std::string cfid_)
 {
     return this->const_paths.folders.cgroup_base_path + "system.slice/docker-" + cfid_ + ".scope/";
 };
-std::string Collector::get_pid_netdev_full_path(std::string cfid_)
-{
-    return this->const_paths.folders.proc_base_path + cfid_ + this->const_paths.files.net_dev_file_rel_path;
-};
 
 void Collector::startCollecting()
 {
@@ -144,7 +157,7 @@ void Collector::startCollecting()
         while (!Collector::exit_flag)
         {
 
-            std::string total_data{static_data};
+            std::string total_data{static_data}; // start var with static host data
 
             total_data += get_host_stats_fields(collect_host_data());
 
@@ -152,8 +165,7 @@ void Collector::startCollecting()
             {
                 for (const std::string &container_id : this->actual_containers_list)
                 {
-                    std::string c_cgroup2path = get_container_cgroup2_full_path(container_id);
-                    std::string c_dockerdpath = get_container_dockerd_full_path(container_id);
+                    total_data += get_container_stats_fields(collect_container_data(container_id), container_id);
                 }
             }
             else
