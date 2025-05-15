@@ -29,10 +29,17 @@ std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_
 
     printf("\n\nContainer %s\nNAME: %s\n", c_id.c_str(), c_data.json_stats.name.c_str());
     printf("Health data: %s\n", c_data.json_stats.health_status.c_str());
+    
+    printf("RX bytes: %d\n", c_data.net_stats.rx_bytes);
+    printf("TX bytes: %d\n", c_data.net_stats.tx_bytes);
+    printf("Memory current: %s\n", c_data.resource_stats.mem_stats.memory_current);
+    printf("CPU system usec: %s\n", c_data.resource_stats.cpu_stats.cpu_system_usec);
+    printf("IO wb: %s\n", c_data.resource_stats.io_stats.io_wbytes);
+    printf("First PID from list: %s\n", c_data.resource_stats.pid_list[0]);
 
     if (c_data.json_stats.is_running)
     {
-        printf("Container is running\n");
+        printf("Container is running\n\n");
     }
 
     return total_fields;

@@ -4,6 +4,6 @@
 
 // for calculation
 float count_host_cpu_load(HostCPUStats cpu_stats); // host
-float get_container_cpu_usage(); // container
+float get_container_cpu_usage(ContainerCPUStats cpu_stats); // container
 
 #endif

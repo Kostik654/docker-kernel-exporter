@@ -18,3 +18,9 @@ float count_host_cpu_load(HostCPUStats cpu_stats)
            ((float)total) *
            100.0f;
 }
+
+float get_container_cpu_usage(ContainerCPUStats)
+{
+
+    return 0.0f;
+}
