@@ -5,7 +5,7 @@
 
 bool update_containers_list(std::string base_path, std::vector<std::string> *list);
 
-std::string get_pid_netdev_full_path(size_t pid_);
+std::string get_pid_netdev_full_path(std::string pid_);
 
 MemInfoData get_host_meminfo_data(std::string filepath, bool just_total = false);
 HostCPUStats get_host_cpu_data(std::string filepath);

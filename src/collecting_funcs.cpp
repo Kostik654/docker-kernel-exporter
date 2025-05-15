@@ -355,7 +355,7 @@ Cgroup2StatsData get_container_cgroup_data(std::string filepath)
 
     c_cg2_stats.cpu_stats = get_container_cpu_stats(filepath + "cpu.stat");
     c_cg2_stats.mem_stats = get_container_mem_stats(filepath);
-    c_cg2_stats.io_stats = get_container_io_stats("io.stat");
+    c_cg2_stats.io_stats = get_container_io_stats(filepath + "io.stat");
     c_cg2_stats.pid_list = read_file_lines(filepath + "cgroup.procs");
 
     return c_cg2_stats;
