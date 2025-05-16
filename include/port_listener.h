@@ -6,7 +6,7 @@ class Listener
 {
 
 private:
-    bool STOP_FLAG = false;
+    std::atomic<bool> STOP_FLAG{false};
     unsigned int PORT;
     std::string IPV4_ADDRESS;
     std::string ENDPOINT;

@@ -9,12 +9,63 @@ Listener::Listener(config_data config, Collector &collector_ref) : COLLECTOR_REF
 
 void Listener::start_server(size_t l_delay)
 {
+    int server_fd, new_socket;
+
+    sockaddr_in address;
+
+    int addr_len = sizeof(address);
+
+    // creating socket
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0)
+    {
+        std::cerr << "Socket creation failed";
+        exit(399);
+    };
+
+    // enabling the address reusing to avoid the TIME_WAIT error because of the often server restarting
+    int addrreuse = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &addrreuse, sizeof(addrreuse)) < 0)
+    {
+        std::cerr << "Reusing address configuration failed";
+        exit(398);
+    };
+
+    // configuring address
+    address.sin_family = AF_INET; // ipv4
+    inet_pton(AF_INET, this->IPV4_ADDRESS.c_str(), &address.sin_addr.s_addr);
+    address.sin_port = htons(this->PORT);
+
+    // binding
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
+    {
+        std::cerr << "Binding failed";
+        exit(397);
+    };
+
+    // listening
+    if (listen(server_fd, 10) < 0)
+    {
+        std::cerr << "Listening error";
+        close(server_fd);
+        exit(396);
+    };
+
+    printf("== Server is listening %s:%d ==\n", this->IPV4_ADDRESS.c_str(), this->PORT);
+
     while (!STOP_FLAG)
     {
-        std::string resp_content = this->COLLECTOR_REF.collected_data;
+        new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addr_len);
+
+        if (new_socket < 0)
+            continue;
+
+        std::thread(handle_client, new_socket).detach();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(l_delay));
-    }
+    };
+
+    close(server_fd);
 };
 
 void Listener::stop_server()
@@ -42,14 +93,13 @@ void Listener::handle_client(size_t client_socket)
         std::ostringstream oss;
         std::string content;
 
-        do
-        {
-            if (!this->COLLECTOR_REF.is_writing)
-            {
-                content = COLLECTOR_REF.collected_data;
-                break;
-            }
-        } while (this->COLLECTOR_REF.is_writing);
+        std::unique_lock<std::mutex> lock(this->COLLECTOR_REF.mtx);
+
+        this->COLLECTOR_REF.c_var.wait(lock, [this]
+                                       { return !this->COLLECTOR_REF.is_writing; });
+
+        content = this->COLLECTOR_REF.collected_data;
+        lock.unlock();
 
         oss << "HTTP/1.1 200 OK\r\n";
         oss << "Content-Type: text/plain; version=0.0.4\r\n";

@@ -15,6 +15,10 @@
 #include <regex>
 #include <arpa/inet.h>
 #include <cstring>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <atomic>
 
 // to find numbers
 const std::string num_arr{"0123456789"};
