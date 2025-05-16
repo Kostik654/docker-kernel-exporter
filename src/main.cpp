@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 
     std::unique_ptr<Collector> collector1 = std::make_unique<Collector>(confy);
 
-    std::unique_ptr<Listener> listener1 = std::make_unique<Listener>(confy, &collector1);
+    std::unique_ptr<Listener> listener1 = std::make_unique<Listener>(confy, *collector1);
 
     if (!collector1->check_paths())
     {
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     std::thread collection_thread(&Collector::startCollecting, collector1.get());
     printf("\n== Collector1 thread is started ==\n");
 
-    std::thread listener_thread(&Listener::start_server, listener1.get());
+    std::thread listener_thread(&Listener::start_server, listener1.get(), 200);
     printf("\n== Listener1 thread is started ==\n");
 
     // Waiting for completion of threads

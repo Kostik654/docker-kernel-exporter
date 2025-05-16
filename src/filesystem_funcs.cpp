@@ -182,7 +182,7 @@ config_data upload_config_data(std::string filepath)
                             cfg.ipv4_address = value_;
                             addr_initialized = true;
                         }
-                        else if (param_name == "endpoint")
+                        else if (param_name == "get_endpoint")
                         {
                             cfg.endpoint = value_;
                             endp_initialized = true;

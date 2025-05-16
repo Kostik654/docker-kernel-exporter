@@ -60,7 +60,7 @@ void Listener::start_server(size_t l_delay)
         if (new_socket < 0)
             continue;
 
-        std::thread(handle_client, new_socket).detach();
+        std::thread(&Listener::handle_client, this, new_socket).detach();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(l_delay));
     };
@@ -88,18 +88,24 @@ void Listener::handle_client(size_t client_socket)
 
     req_stream >> method >> endpoint >> http_v;
 
+    printf("listener: incoming responce: %s\n", endpoint.c_str());
+
     if (method == "GET" && endpoint == this->ENDPOINT)
     {
         std::ostringstream oss;
         std::string content;
 
-        std::unique_lock<std::mutex> lock(this->COLLECTOR_REF.mtx);
+        // printf("GET metrics\n");
 
-        this->COLLECTOR_REF.c_var.wait(lock, [this]
-                                       { return !this->COLLECTOR_REF.is_writing; });
+        do
+        {
+            if (!this->COLLECTOR_REF.lock_data)
+            {
+                content = this->COLLECTOR_REF.collected_data;
+                break;
+            }
 
-        content = this->COLLECTOR_REF.collected_data;
-        lock.unlock();
+        } while (this->COLLECTOR_REF.lock_data);
 
         oss << "HTTP/1.1 200 OK\r\n";
         oss << "Content-Type: text/plain; version=0.0.4\r\n";

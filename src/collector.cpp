@@ -141,7 +141,6 @@ std::string Collector::get_container_cgroup2_full_path(std::string cfid_)
 void Collector::startCollecting()
 {
     std::string static_data{};
-    std::unique_lock<std::mutex> lock(this->mtx);
 
     printf("\n== Starting collector ==\n\n");
 
@@ -178,12 +177,10 @@ void Collector::startCollecting()
                 break;
             };
 
-            this->is_writing = true;
-            this->c_var.wait(lock, [this]
-                             { return true; });
+            
+            this->lock_data = true;
             this->collected_data = oss.str();
-            this->is_writing = false;
-            this->c_var.notify_all();
+            this->lock_data = false;
 
             std::this_thread::sleep_for(std::chrono::seconds(this->cfg_data.scrape_period));
         };

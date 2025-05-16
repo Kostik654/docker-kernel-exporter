@@ -38,9 +38,7 @@ public:
 
     std::string collected_data;
 
-    std::atomic<bool> is_writing = false;
-    std::mutex mtx;
-    std::condition_variable c_var;
+    std::atomic<bool> lock_data = false;
 
     void printConfig();
 
