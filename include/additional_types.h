@@ -109,6 +109,7 @@ struct MetricArgs
     std::string m_description;
     std::string m_unit;
     std::string m_value;
+    std::string label_substr{""};
 };
 
 // container dynamic stats + static
