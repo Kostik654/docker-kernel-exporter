@@ -47,10 +47,11 @@ HostStatsData Collector::collect_host_data()
 ContainerStatsData Collector::collect_container_data(std::string c_id)
 {
     ContainerStatsData c_total_data;
-    
+
     c_total_data.json_stats = get_container_json_data(get_container_dockerd_full_path(c_id) + this->const_paths.files.json_config_filename);
 
-    if (c_total_data.json_stats.is_running) {
+    if (c_total_data.json_stats.is_running)
+    {
         c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id));
         c_total_data.net_stats = get_processes_sum_network_data(c_total_data.resource_stats.pid_list);
     }
@@ -156,16 +157,17 @@ void Collector::startCollecting()
 
         while (!Collector::exit_flag)
         {
+            std::ostringstream oss;
 
-            std::string total_data{static_data}; // start var with static host data
+            oss << static_data; // start var with static host data
 
-            total_data += get_host_stats_fields(collect_host_data());
+            oss << get_host_stats_fields(collect_host_data());
 
             if (update_containers_list(this->cfg_data.default_dockerd_base_path, &this->actual_containers_list))
             {
                 for (const std::string &container_id : this->actual_containers_list)
                 {
-                    total_data += get_container_stats_fields(collect_container_data(container_id), container_id);
+                    oss << get_container_stats_fields(collect_container_data(container_id), container_id);
                 }
             }
             else
@@ -173,14 +175,11 @@ void Collector::startCollecting()
                 std::cerr << "Unable to get the actual containers ids list in [" << this->cfg_data.default_dockerd_base_path << "] directory" << std::endl;
                 Collector::exit_code = 101;
                 break;
-            }
+            };
 
-            if (!output_metrics(total_data, this->cfg_data.default_metrics_file))
-            {
-                printf("Collecting was failed\n");
-                Collector::exit_code = 102;
-                break;
-            }
+            this->is_writing = true;
+            this->collected_data = oss.str();
+            this->is_writing = false;
 
             std::this_thread::sleep_for(std::chrono::seconds(this->cfg_data.scrape_period));
         };

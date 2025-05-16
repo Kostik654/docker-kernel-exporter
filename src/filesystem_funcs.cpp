@@ -74,22 +74,22 @@ std::vector<std::string> read_file_lines(std::string filepath)
     return lines;
 };
 
-bool output_metrics(std::string content, std::string filepath)
-{
+// bool output_metrics(std::string content, std::string filepath)
+// {
 
-    try
-    {
-        std::ofstream out(filepath);
-        out << content;
-        out.close();
-        return true;
-    }
-    catch (const std::exception &err)
-    {
-        std::cerr << "Writing metrics to file [" << filepath << "] error occurred: " << err.what() << std::endl;
-        return false;
-    }
-}
+//     try
+//     {
+//         std::ofstream out(filepath);
+//         out << content;
+//         out.close();
+//         return true;
+//     }
+//     catch (const std::exception &err)
+//     {
+//         std::cerr << "Writing metrics to file [" << filepath << "] error occurred: " << err.what() << std::endl;
+//         return false;
+//     }
+// }
 
 config_data upload_config_data(std::string filepath)
 {
@@ -102,6 +102,10 @@ config_data upload_config_data(std::string filepath)
     bool scrapeperiod_initialized = false;
     bool metricsfile_initialized = false;
     bool dockerdpath_initialized = false;
+    bool addr_initialized = false;
+    bool port_initialized = false;
+    bool endp_initialized = false;
+    bool all_in = false;
 
     if (!fs::exists(filepath))
     {
@@ -168,6 +172,21 @@ config_data upload_config_data(std::string filepath)
                             cfg.default_dockerd_base_path = value_;
                             dockerdpath_initialized = true;
                         }
+                        else if (param_name == "bind_port")
+                        {
+                            cfg.port = std::stoi(value_);
+                            port_initialized = true;
+                        }
+                        else if (param_name == "ipv4_address")
+                        {
+                            cfg.ipv4_address = value_;
+                            addr_initialized = true;
+                        }
+                        else if (param_name == "endpoint")
+                        {
+                            cfg.endpoint = value_;
+                            endp_initialized = true;
+                        }
                         else
                         {
                             std::cerr << "Error: param [" << param_name << "] does not exist" << std::endl;
@@ -176,8 +195,14 @@ config_data upload_config_data(std::string filepath)
 
                         printf(">> uploader: %s = %s\n", param_name.c_str(), value_.c_str());
 
-                        if (metricsfile_initialized && dockerdpath_initialized && scrapeperiod_initialized)
+                        if (metricsfile_initialized &&
+                            dockerdpath_initialized &&
+                            scrapeperiod_initialized &&
+                            port_initialized &&
+                            addr_initialized &&
+                            endp_initialized)
                         {
+                            all_in = true;
                             conf_file.close();
                             break;
                         }
@@ -190,7 +215,7 @@ config_data upload_config_data(std::string filepath)
                 return config_data();
             }
 
-            if (metricsfile_initialized && dockerdpath_initialized && scrapeperiod_initialized)
+            if (all_in)
                 printf("\n== All the configuration variables were updated successfully ==\n");
             else
             {

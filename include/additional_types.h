@@ -13,6 +13,8 @@
 #include <limits.h>
 #include <sstream>
 #include <regex>
+#include <arpa/inet.h>
+#include <cstring>
 
 // to find numbers
 const std::string num_arr{"0123456789"};
@@ -20,9 +22,14 @@ const std::string num_arr{"0123456789"};
 // configuration file
 struct config_data
 {
-    int scrape_period = 3;
+    unsigned int scrape_period = 3;
+    unsigned int port = 65404;
+
+    std::string ipv4_address{"0.0.0.0"};
+    std::string endpoint{"metrics"};
     std::string default_dockerd_base_path{"/var/lib/docker/containers/"};
     std::string default_metrics_file{"./metrics.data"};
+
 };
 
 // constant paths: files and dirs

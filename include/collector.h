@@ -36,6 +36,9 @@ public:
 
     bool set_static_host_info(StaticHostData *host_stats);
 
+    std::string collected_data;
+    bool is_writing = false;
+
     void printConfig();
 
     ~Collector();
