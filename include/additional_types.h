@@ -33,7 +33,6 @@ struct config_data
     std::string endpoint{"metrics"};
     std::string default_dockerd_base_path{"/var/lib/docker/containers/"};
     std::string default_metrics_file{"./metrics.data"};
-
 };
 
 // constant paths: files and dirs
@@ -105,11 +104,13 @@ struct MemInfoData
 // common
 struct MetricArgs
 {
+    const std::string name_prefix{"kernel_de_"};
     std::string m_name;
     std::string m_description;
-    std::string m_unit;
+    std::string m_unit{"gauge"};
     std::string m_value;
     std::string label_substr{""};
+    inline std::string get_m_name() { return name_prefix + m_name; };
 };
 
 // container dynamic stats + static

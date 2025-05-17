@@ -2,26 +2,78 @@
 
 std::string get_host_static_metric_fields(StaticHostData host_data)
 {
-    std::string total_fields{""};
+    std::ostringstream total_fields;
 
-    printf("Hostname: %s\n", host_data.hostname.c_str());
+    MetricArgs h_memory, h_vcpuc; // gauge
 
-    return total_fields;
-}
+    std::string obj_type = {"{object=\"host\", stat_type=\"static\"}"};
+    h_memory.label_substr = obj_type;
+    h_vcpuc.label_substr = obj_type;
+
+    h_memory.m_name = {"host_total_memory"};
+    h_vcpuc.m_name = {"host_vcpu_count"};
+
+    h_memory.m_description = {"Total Host RAM in kB"};
+    h_vcpuc.m_description = {"Total Host VCPUs number"};
+
+    h_memory.m_value = {std::to_string(host_data.memory_max)};
+    h_vcpuc.m_value = {std::to_string(host_data.vcpus_count)};
+
+    total_fields << get_stat_metric_field(h_memory);
+    total_fields << get_stat_metric_field(h_vcpuc);
+
+    return total_fields.str();
+};
+
+std::string get_stat_metric_field(MetricArgs base_args)
+{
+    std::ostringstream oss;
+    oss << "HELP " << base_args.get_m_name() << " " << base_args.m_description << std::endl;
+    oss << "TYPE " << base_args.get_m_name() << base_args.m_unit << std::endl;
+    oss << base_args.get_m_name() << base_args.label_substr << " " << base_args.m_value << std::endl;
+    return oss.str();
+};
 
 std::string get_host_stats_fields(HostStatsData host_data)
 {
-    std::string total_fields{""};
+    std::ostringstream total_fields;
 
-    //printf("CPU load: %.2f%%\n", count_host_cpu_load(host_data.cpu));
-    // printf("CPU user: %d\n", host_data.cpu.cpu_user);
-    // printf("CPU system: %d\n", host_data.cpu.cpu_system);
-    // printf("CPU nice: %d\n", host_data.cpu.cpu_nice);
-    // printf("CPU total processes: %d\n", host_data.cpu.processes_total);
-    // printf("CPU running processes: %d\n", host_data.cpu.processes_running);
+    MetricArgs h_cpu_usage, h_procs_total, h_procs_run; // gauge
+    MetricArgs h_memory_avail, h_memory_free; // gauge
 
-    return total_fields;
-}
+    std::string obj_type = {"{object=\"host\", stat_type=\"dynamic\"}"};
+    h_cpu_usage.label_substr = obj_type;
+    h_procs_total.label_substr = obj_type;
+    h_procs_run.label_substr = obj_type;
+    h_memory_avail.label_substr = obj_type;
+    h_memory_free.label_substr = obj_type;
+
+    h_cpu_usage.m_name = {"host_cpu_usage"};
+    h_procs_total.m_name = {"host_total_procs"};
+    h_procs_run.m_name = {"host_running_procs"};
+    h_memory_avail.m_name = {"host_memory_avail"};
+    h_memory_free.m_name = {"host_memory_free"};
+
+    h_cpu_usage.m_description = {"Host CPU usage in percents"};
+    h_procs_total.m_description = {"Host total processes number"};
+    h_procs_run.m_description = {"Host running processes number"};
+    h_memory_avail.m_description = {"Host available memory in kB"};
+    h_memory_free.m_description = {"Host free memory in kB"};
+
+    h_cpu_usage.m_value = count_host_cpu_load(host_data.cpu);
+    h_procs_total.m_value = host_data.cpu.processes_total;
+    h_procs_run.m_value = host_data.cpu.processes_running;
+    h_memory_avail.m_value = host_data.memory.mem_avail_kB;
+    h_memory_free.m_value = host_data.memory.mem_free_kB;
+
+    total_fields << get_stat_metric_field(h_cpu_usage);
+    total_fields << get_stat_metric_field(h_procs_run);
+    total_fields << get_stat_metric_field(h_procs_total);
+    total_fields << get_stat_metric_field(h_memory_avail);
+    total_fields << get_stat_metric_field(h_memory_free);
+
+    return total_fields.str();
+};
 
 std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_id)
 {
@@ -42,4 +94,4 @@ std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_
     }
 
     return total_fields;
-}
+};
