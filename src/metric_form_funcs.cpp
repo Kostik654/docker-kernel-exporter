@@ -60,11 +60,11 @@ std::string get_host_stats_fields(HostStatsData host_data)
     h_memory_avail.m_description = {"Host available memory in kB"};
     h_memory_free.m_description = {"Host free memory in kB"};
 
-    h_cpu_usage.m_value = count_host_cpu_load(host_data.cpu);
-    h_procs_total.m_value = host_data.cpu.processes_total;
-    h_procs_run.m_value = host_data.cpu.processes_running;
-    h_memory_avail.m_value = host_data.memory.mem_avail_kB;
-    h_memory_free.m_value = host_data.memory.mem_free_kB;
+    h_cpu_usage.m_value = std::to_string(count_host_cpu_load(host_data.cpu));
+    h_procs_total.m_value = std::to_string(host_data.cpu.processes_total);
+    h_procs_run.m_value = std::to_string(host_data.cpu.processes_running);
+    h_memory_avail.m_value = std::to_string(host_data.memory.mem_avail_kB);
+    h_memory_free.m_value = std::to_string(host_data.memory.mem_free_kB);
 
     total_fields << get_stat_metric_field(h_cpu_usage);
     total_fields << get_stat_metric_field(h_procs_run);

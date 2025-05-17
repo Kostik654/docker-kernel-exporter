@@ -88,7 +88,7 @@ void Listener::handle_client(size_t client_socket)
 
     req_stream >> method >> endpoint >> http_v;
 
-    printf("listener: incoming responce: %s\n", endpoint.c_str());
+    // printf("listener: incoming responce: %s\n", endpoint.c_str());
 
     if (method == "GET" && endpoint == this->ENDPOINT)
     {
