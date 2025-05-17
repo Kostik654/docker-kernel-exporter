@@ -29,7 +29,7 @@ std::string get_stat_metric_field(MetricArgs base_args)
 {
     std::ostringstream oss;
     oss << "HELP " << base_args.get_m_name() << " " << base_args.m_description << std::endl;
-    oss << "TYPE " << base_args.get_m_name() << base_args.m_unit << std::endl;
+    oss << "TYPE " << base_args.get_m_name() << " " << base_args.m_unit << std::endl;
     oss << base_args.get_m_name() << base_args.label_substr << " " << base_args.m_value << std::endl;
     return oss.str();
 };
