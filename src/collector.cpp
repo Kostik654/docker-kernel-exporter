@@ -39,7 +39,15 @@ HostStatsData Collector::collect_host_data()
     HostStatsData host_data;
 
     host_data.memory = get_host_meminfo_data(this->const_paths.files.host_meminfo_file_path);
-    host_data.cpu = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
+
+    HostCPUStats cpu_a, cpu_b;
+    cpu_a = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
+    std::this_thread::sleep_for(std::chrono::milliseconds(this->cfg_data.h_cpu_int));
+    cpu_b = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
+    host_data.h_cpu_usage = count_host_cpu_load(return_host_cpu_delta(cpu_a, cpu_b));
+
+    host_data.procs_running = cpu_b.processes_running;
+    host_data.procs_total = cpu_b.processes_total;
 
     return host_data;
 }
@@ -47,11 +55,12 @@ HostStatsData Collector::collect_host_data()
 ContainerStatsData Collector::collect_container_data(std::string c_id)
 {
     ContainerStatsData c_total_data;
-    
+
     c_total_data.json_stats = get_container_json_data(get_container_dockerd_full_path(c_id) + this->const_paths.files.json_config_filename);
 
-    if (c_total_data.json_stats.is_running) {
-        c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id));
+    if (c_total_data.json_stats.is_running)
+    {
+        c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id), this->cfg_data.c_cpu_int);
         c_total_data.net_stats = get_processes_sum_network_data(c_total_data.resource_stats.pid_list);
     }
 
@@ -156,16 +165,17 @@ void Collector::startCollecting()
 
         while (!Collector::exit_flag)
         {
+            std::ostringstream oss;
 
-            std::string total_data{static_data}; // start var with static host data
+            oss << static_data; // start var with static host data
 
-            total_data += get_host_stats_fields(collect_host_data());
+            oss << get_host_stats_fields(collect_host_data());
 
             if (update_containers_list(this->cfg_data.default_dockerd_base_path, &this->actual_containers_list))
             {
                 for (const std::string &container_id : this->actual_containers_list)
                 {
-                    total_data += get_container_stats_fields(collect_container_data(container_id), container_id);
+                    oss << get_container_stats_fields(collect_container_data(container_id), container_id);
                 }
             }
             else
@@ -173,14 +183,11 @@ void Collector::startCollecting()
                 std::cerr << "Unable to get the actual containers ids list in [" << this->cfg_data.default_dockerd_base_path << "] directory" << std::endl;
                 Collector::exit_code = 101;
                 break;
-            }
+            };
 
-            if (!output_metrics(total_data, this->cfg_data.default_metrics_file))
-            {
-                printf("Collecting was failed\n");
-                Collector::exit_code = 102;
-                break;
-            }
+            this->lock_data = true;
+            this->collected_data = oss.str();
+            this->lock_data = false;
 
             std::this_thread::sleep_for(std::chrono::seconds(this->cfg_data.scrape_period));
         };

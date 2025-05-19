@@ -36,6 +36,10 @@ public:
 
     bool set_static_host_info(StaticHostData *host_stats);
 
+    std::string collected_data;
+
+    std::atomic<bool> lock_data = false;
+
     void printConfig();
 
     ~Collector();

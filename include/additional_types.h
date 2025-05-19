@@ -13,6 +13,12 @@
 #include <limits.h>
 #include <sstream>
 #include <regex>
+#include <arpa/inet.h>
+#include <cstring>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <atomic>
 
 // to find numbers
 const std::string num_arr{"0123456789"};
@@ -20,7 +26,14 @@ const std::string num_arr{"0123456789"};
 // configuration file
 struct config_data
 {
-    int scrape_period = 3;
+    unsigned int scrape_period = 3;
+    unsigned int port = 65404;
+
+    unsigned int h_cpu_int = 100; // host CPU measurement interval
+    unsigned int c_cpu_int = 100; // container measurement CPU interval
+
+    std::string ipv4_address{"0.0.0.0"};
+    std::string endpoint{"metrics"};
     std::string default_dockerd_base_path{"/var/lib/docker/containers/"};
     std::string default_metrics_file{"./metrics.data"};
 };
@@ -94,10 +107,13 @@ struct MemInfoData
 // common
 struct MetricArgs
 {
+    const std::string name_prefix{"kernel_de_"};
     std::string m_name;
     std::string m_description;
-    std::string m_unit;
+    std::string m_unit{"gauge"};
     std::string m_value;
+    std::string label_substr{""};
+    inline std::string get_m_name() { return name_prefix + m_name; };
 };
 
 // container dynamic stats + static
@@ -127,10 +143,10 @@ struct ContainerIOStats
 // container dynamic stats
 struct Cgroup2StatsData
 {
-    ContainerCPUStats cpu_stats;
     ContainerMemoryStats mem_stats;
     ContainerIOStats io_stats;
     std::vector<std::string> pid_list;
+    float c_cpu_usage;
 };
 
 // one process dynamic stats
@@ -152,7 +168,9 @@ struct StaticHostData
 struct HostStatsData
 {
     MemInfoData memory;
-    HostCPUStats cpu;
+    size_t procs_total;
+    size_t procs_running;
+    float h_cpu_usage;
 };
 
 struct ContainerStatsData
