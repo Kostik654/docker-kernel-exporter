@@ -39,7 +39,12 @@ HostStatsData Collector::collect_host_data()
     HostStatsData host_data;
 
     host_data.memory = get_host_meminfo_data(this->const_paths.files.host_meminfo_file_path);
-    host_data.cpu = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
+
+    HostCPUStats cpu_a, cpu_b;
+    cpu_a = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
+    std::this_thread::sleep_for(std::chrono::milliseconds(this->cfg_data.h_cpu_int));
+    cpu_b = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
+    host_data.cpu_delta = return_host_cpu_delta(cpu_a, cpu_b);
 
     return host_data;
 }
@@ -52,7 +57,7 @@ ContainerStatsData Collector::collect_container_data(std::string c_id)
 
     if (c_total_data.json_stats.is_running)
     {
-        c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id));
+        c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id), this->cfg_data.c_cpu_int);
         c_total_data.net_stats = get_processes_sum_network_data(c_total_data.resource_stats.pid_list);
     }
 

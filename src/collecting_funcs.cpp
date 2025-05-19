@@ -349,11 +349,17 @@ ContainerIOStats get_container_io_stats(std::string filepath)
     return c_io_stats;
 };
 
-Cgroup2StatsData get_container_cgroup_data(std::string filepath)
+Cgroup2StatsData get_container_cgroup_data(std::string filepath, unsigned int cpu_int)
 {
     Cgroup2StatsData c_cg2_stats;
+    ContainerCPUStats cpu_a, cpu_b;
 
-    c_cg2_stats.cpu_stats = get_container_cpu_stats(filepath + "cpu.stat");
+    cpu_a = get_container_cpu_stats(filepath + "cpu.stat");
+    std::this_thread::sleep_for(std::chrono::milliseconds(cpu_int));
+    cpu_b = get_container_cpu_stats(filepath + "cpu.stat");
+    c_cg2_stats.cpu_stats_delta = return_container_cpu_delta(cpu_a, cpu_b);
+
+
     c_cg2_stats.mem_stats = get_container_mem_stats(filepath);
     c_cg2_stats.io_stats = get_container_io_stats(filepath + "io.stat");
     c_cg2_stats.pid_list = read_file_lines(filepath + "cgroup.procs");

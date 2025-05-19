@@ -29,6 +29,9 @@ struct config_data
     unsigned int scrape_period = 3;
     unsigned int port = 65404;
 
+    unsigned int h_cpu_int = 100; // host CPU measurement interval
+    unsigned int c_cpu_int = 100; // container measurement CPU interval
+
     std::string ipv4_address{"0.0.0.0"};
     std::string endpoint{"metrics"};
     std::string default_dockerd_base_path{"/var/lib/docker/containers/"};
@@ -140,7 +143,7 @@ struct ContainerIOStats
 // container dynamic stats
 struct Cgroup2StatsData
 {
-    ContainerCPUStats cpu_stats;
+    ContainerCPUStats cpu_stats_delta;
     ContainerMemoryStats mem_stats;
     ContainerIOStats io_stats;
     std::vector<std::string> pid_list;
@@ -165,7 +168,7 @@ struct StaticHostData
 struct HostStatsData
 {
     MemInfoData memory;
-    HostCPUStats cpu;
+    HostCPUStats cpu_delta;
 };
 
 struct ContainerStatsData

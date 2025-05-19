@@ -28,8 +28,8 @@ std::string get_host_static_metric_fields(StaticHostData host_data)
 std::string get_stat_metric_field(MetricArgs base_args)
 {
     std::ostringstream oss;
-    oss << "HELP " << base_args.get_m_name() << " " << base_args.m_description << std::endl;
-    oss << "TYPE " << base_args.get_m_name() << " " << base_args.m_unit << std::endl;
+    oss << "# HELP " << base_args.get_m_name() << " " << base_args.m_description << std::endl;
+    oss << "# TYPE " << base_args.get_m_name() << " " << base_args.m_unit << std::endl;
     oss << base_args.get_m_name() << base_args.label_substr << " " << base_args.m_value << std::endl;
     return oss.str();
 };
@@ -60,9 +60,9 @@ std::string get_host_stats_fields(HostStatsData host_data)
     h_memory_avail.m_description = {"Host available memory in kB"};
     h_memory_free.m_description = {"Host free memory in kB"};
 
-    h_cpu_usage.m_value = std::to_string(count_host_cpu_load(host_data.cpu));
-    h_procs_total.m_value = std::to_string(host_data.cpu.processes_total);
-    h_procs_run.m_value = std::to_string(host_data.cpu.processes_running);
+    h_cpu_usage.m_value = std::to_string(count_host_cpu_load(host_data.cpu_delta));
+    h_procs_total.m_value = std::to_string(host_data.cpu_delta.processes_total);
+    h_procs_run.m_value = std::to_string(host_data.cpu_delta.processes_running);
     h_memory_avail.m_value = std::to_string(host_data.memory.mem_avail_kB);
     h_memory_free.m_value = std::to_string(host_data.memory.mem_free_kB);
 
@@ -77,7 +77,7 @@ std::string get_host_stats_fields(HostStatsData host_data)
 
 std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_id)
 {
-    std::string total_fields{""};
+    std::ostringstream total_fields;
 
     // printf("\n\nContainer %s\nNAME: %s\n", c_id.c_str(), c_data.json_stats.name.c_str());
     // printf("Health data: %s\n", c_data.json_stats.health_status.c_str());
@@ -93,5 +93,5 @@ std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_
         // printf("First PID from list: %s\n", c_data.resource_stats.pid_list[0].c_str());
     }
 
-    return total_fields;
+    return total_fields.str();
 };

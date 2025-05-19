@@ -105,6 +105,8 @@ config_data upload_config_data(std::string filepath)
     bool addr_initialized = false;
     bool port_initialized = false;
     bool endp_initialized = false;
+    bool hcpumi_initialized = false;
+    bool ccpumi_initialized = false;
     bool all_in = false;
 
     if (!fs::exists(filepath))
@@ -187,6 +189,17 @@ config_data upload_config_data(std::string filepath)
                             cfg.endpoint = value_;
                             endp_initialized = true;
                         }
+                        // CPU
+                        else if (param_name == "h_cpu_mi_ms")
+                        {
+                            cfg.h_cpu_int = std::stoi(value_);
+                            hcpumi_initialized = true;
+                        }
+                        else if (param_name == "c_cpu_mi_ms")
+                        {
+                            cfg.c_cpu_int = std::stoi(value_);
+                            ccpumi_initialized = true;
+                        }
                         else
                         {
                             std::cerr << "Error: param [" << param_name << "] does not exist" << std::endl;
@@ -200,6 +213,8 @@ config_data upload_config_data(std::string filepath)
                             scrapeperiod_initialized &&
                             port_initialized &&
                             addr_initialized &&
+                            hcpumi_initialized &&
+                            ccpumi_initialized &&
                             endp_initialized)
                         {
                             all_in = true;
