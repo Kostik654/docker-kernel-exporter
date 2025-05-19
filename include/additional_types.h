@@ -143,10 +143,10 @@ struct ContainerIOStats
 // container dynamic stats
 struct Cgroup2StatsData
 {
-    ContainerCPUStats cpu_stats_delta;
     ContainerMemoryStats mem_stats;
     ContainerIOStats io_stats;
     std::vector<std::string> pid_list;
+    float c_cpu_usage;
 };
 
 // one process dynamic stats
@@ -168,7 +168,9 @@ struct StaticHostData
 struct HostStatsData
 {
     MemInfoData memory;
-    HostCPUStats cpu_delta;
+    size_t procs_total;
+    size_t procs_running;
+    float h_cpu_usage;
 };
 
 struct ContainerStatsData

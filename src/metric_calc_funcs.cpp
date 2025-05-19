@@ -59,7 +59,7 @@ float count_host_cpu_load(HostCPUStats cpu_stats_delta)
 }
 
 // interval in microseconds
-float get_container_cpu_usage(ContainerCPUStats delta, uint64_t interval_usec_ms)
+float count_container_cpu_load(ContainerCPUStats delta, uint64_t interval_usec_ms)
 {
     if (interval_usec_ms == 0) {
         return 0.0f;

@@ -357,7 +357,7 @@ Cgroup2StatsData get_container_cgroup_data(std::string filepath, unsigned int cp
     cpu_a = get_container_cpu_stats(filepath + "cpu.stat");
     std::this_thread::sleep_for(std::chrono::milliseconds(cpu_int));
     cpu_b = get_container_cpu_stats(filepath + "cpu.stat");
-    c_cg2_stats.cpu_stats_delta = return_container_cpu_delta(cpu_a, cpu_b);
+    c_cg2_stats.c_cpu_usage = count_container_cpu_load(return_container_cpu_delta(cpu_a, cpu_b), cpu_int);
 
 
     c_cg2_stats.mem_stats = get_container_mem_stats(filepath);

@@ -44,7 +44,10 @@ HostStatsData Collector::collect_host_data()
     cpu_a = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
     std::this_thread::sleep_for(std::chrono::milliseconds(this->cfg_data.h_cpu_int));
     cpu_b = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
-    host_data.cpu_delta = return_host_cpu_delta(cpu_a, cpu_b);
+    host_data.h_cpu_usage = count_host_cpu_load(return_host_cpu_delta(cpu_a, cpu_b));
+
+    host_data.procs_running = cpu_b.processes_running;
+    host_data.procs_total = cpu_b.processes_total;
 
     return host_data;
 }
@@ -182,7 +185,6 @@ void Collector::startCollecting()
                 break;
             };
 
-            
             this->lock_data = true;
             this->collected_data = oss.str();
             this->lock_data = false;
