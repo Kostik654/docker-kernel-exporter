@@ -72,6 +72,8 @@ std::string get_host_stats_fields(HostStatsData host_data)
     total_fields << get_stat_metric_field(h_memory_avail);
     total_fields << get_stat_metric_field(h_memory_free);
 
+    // std::cout << "Host stats collected" << std::endl;
+
     return total_fields.str();
 };
 
@@ -144,6 +146,8 @@ std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_
         total_fields << get_stat_metric_field(net_tx);
 
     }
+
+    // std::cout << "Container " << c_data.json_stats.name <<" stats collected" << std::endl;
 
     return total_fields.str();
 };

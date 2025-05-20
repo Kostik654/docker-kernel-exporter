@@ -18,8 +18,7 @@ ContainerCPUStats get_container_cpu_stats(std::string filepath);
 ContainerDockerdData get_container_json_data(std::string filepath);
 Cgroup2StatsData get_container_cgroup_data(std::string filepath, unsigned int cpu_int);
 
-NetworkStatsData get_process_network_data(std::string filepath); // any proccess
-NetworkStatsData get_processes_sum_network_data(std::vector<std::string> pid_list); // aggregation of all processes network stats
+NetworkStatsData get_process_network_data(size_t main_pid); // any proccess
 
 
 #endif

@@ -61,7 +61,7 @@ ContainerStatsData Collector::collect_container_data(std::string c_id)
     if (c_total_data.json_stats.is_running)
     {
         c_total_data.resource_stats = get_container_cgroup_data(get_container_cgroup2_full_path(c_id), this->cfg_data.c_cpu_int);
-        c_total_data.net_stats = get_processes_sum_network_data(c_total_data.resource_stats.pid_list);
+        c_total_data.net_stats = get_process_network_data(c_total_data.json_stats.main_pid);
     }
 
     return c_total_data;
