@@ -8,6 +8,8 @@ unsigned int Collector::exit_code = 0;
 Collector::Collector(config_data cfg)
 {
 
+    static_host_data = StaticHostData();
+
     if (fs::exists(cfg.default_dockerd_base_path))
     {
         this->cfg_data.default_dockerd_base_path = cfg.default_dockerd_base_path;
@@ -34,13 +36,12 @@ Collector::Collector(config_data cfg)
     printf("\n== Collector was added ==\n");
 }
 
-HostStatsData Collector::collect_host_data()
-{
-    HostStatsData host_data;
+HostStatsData Collector::collect_host_data() const {
+    HostStatsData host_data{};
 
     host_data.memory = get_host_meminfo_data(this->const_paths.files.host_meminfo_file_path);
 
-    HostCPUStats cpu_a, cpu_b;
+    HostCPUStats cpu_a{}, cpu_b{};
     cpu_a = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
     std::this_thread::sleep_for(std::chrono::milliseconds(this->cfg_data.h_cpu_int));
     cpu_b = get_host_cpu_data(this->const_paths.files.host_cpu_stats_file_path);
@@ -52,9 +53,8 @@ HostStatsData Collector::collect_host_data()
     return host_data;
 }
 
-ContainerStatsData Collector::collect_container_data(std::string c_id)
-{
-    ContainerStatsData c_total_data;
+ContainerStatsData Collector::collect_container_data(std::string c_id) const {
+    ContainerStatsData c_total_data{};
 
     c_total_data.json_stats = get_container_json_data(get_container_dockerd_full_path(c_id) + this->const_paths.files.json_config_filename);
 
@@ -67,8 +67,8 @@ ContainerStatsData Collector::collect_container_data(std::string c_id)
     return c_total_data;
 }
 
-void Collector::printConfig()
-{
+void Collector::printConfig() const {
+    printf("\nINFO: %s\n", this->collector_version_info.c_str());
     printf("\n== Collector configuration BEGIN ==\n");
     printf("Dockerd path: %s\n", this->cfg_data.default_dockerd_base_path.c_str());
     printf("cgroupv2 path: %s\n", this->const_paths.folders.cgroup_base_path.c_str());
@@ -108,8 +108,7 @@ bool Collector::check_paths()
     return true;
 };
 
-bool Collector::set_static_host_info(StaticHostData *host_stats)
-{
+bool Collector::set_static_host_info(StaticHostData *host_stats) const {
     try
     {
         // get vcpus count
@@ -137,12 +136,11 @@ bool Collector::set_static_host_info(StaticHostData *host_stats)
     }
 };
 
-std::string Collector::get_container_dockerd_full_path(std::string cfid_)
+std::string Collector::get_container_dockerd_full_path(std::string cfid_) const
 {
     return this->cfg_data.default_dockerd_base_path + cfid_ + "/";
 };
-std::string Collector::get_container_cgroup2_full_path(std::string cfid_)
-{
+std::string Collector::get_container_cgroup2_full_path(std::string cfid_) const {
     return this->const_paths.folders.cgroup_base_path + "system.slice/docker-" + cfid_ + ".scope/";
 };
 
@@ -200,4 +198,4 @@ void Collector::startCollecting()
     }
 };
 
-Collector::~Collector() {};
+Collector::~Collector() = default;
