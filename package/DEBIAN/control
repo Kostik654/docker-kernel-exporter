@@ -2,9 +2,8 @@ Package: kernel-de-collector
 Version: 1.0
 Section: utils
 Priority: optional
-Architecture: x86-64
+Architecture: amd64
 Maintainer: Konstantin Andreew <kostiaandreew591@gmail.com>
 Description: Docker Kernel Exporter's Collector Service
  This service collects docker && system data and exports it for monitoring purposes.
  It includes a configuration file, systemd service and executable binary.
- 

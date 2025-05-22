@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/bin/kde-collector /etc/kernel-de/kernel-de.conf
+ExecStart=/usr/bin/kernel-de /etc/kernel-de/kernel-de.conf
 Restart=on-failure
 RestartSec=5
 StandardOutput=append:/var/log/kde-collector.log
