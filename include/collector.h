@@ -14,8 +14,6 @@ private:
 
     config_data cfg_data;
 
-    StaticHostData static_host_data;
-
     std::vector<std::string> actual_containers_list;
 
 public:
@@ -34,7 +32,7 @@ public:
 
     bool check_paths();
 
-    bool set_static_host_info(StaticHostData *host_stats) const;
+    bool set_static_host_info(StaticHostData &host_stats) const;
 
     std::string collected_data;
 

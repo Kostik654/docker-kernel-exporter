@@ -1,6 +1,5 @@
 #include "filesystem_funcs.h"
 
-namespace fs = std::filesystem;
 
 bool check_object_path(std::string obj_path, std::string obj_name, bool is_dir)
 {
@@ -109,7 +108,7 @@ config_data upload_config_data(std::string filepath)
     bool ccpumi_initialized = false;
     bool all_in = false;
 
-    if (!fs::exists(filepath))
+    if (!check_object_path(filepath, "Configuration file", false))
     {
         printf("Configuration file [%s] does not exists. Using default values.\n", filepath.c_str());
         return cfg;
