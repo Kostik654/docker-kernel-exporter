@@ -123,8 +123,8 @@ bool Collector::set_static_host_info(StaticHostData &host_stats) const {
 
         // print for log revision
         printf("\n== Static host [%s] data is collected ==\n", host_stats.hostname.c_str());
-        printf(">> VCPUs: %ld\n", host_stats.vcpus_count);
-        printf(">> Total Memory: %ld kB\n", host_stats.memory_max);
+        printf(">> VCPUs: %zu\n", host_stats.vcpus_count);
+        printf(">> Total Memory: %zu kB\n", host_stats.memory_max);
 
         return true;
     }
