@@ -2,7 +2,7 @@
 
 HostCPUStats return_host_cpu_delta(HostCPUStats cpu_stats_a, HostCPUStats cpu_stats_b)
 {
-    HostCPUStats delta;
+    HostCPUStats delta{};
     // last data
     delta.processes_running = cpu_stats_b.processes_running;
     delta.processes_total = cpu_stats_b.processes_total;
@@ -23,7 +23,7 @@ HostCPUStats return_host_cpu_delta(HostCPUStats cpu_stats_a, HostCPUStats cpu_st
 
 ContainerCPUStats return_container_cpu_delta(ContainerCPUStats c_cpu_stats_a, ContainerCPUStats c_cpu_stats_b)
 {
-    ContainerCPUStats delta;
+    ContainerCPUStats delta{};
 
     delta.cpu_user_usec = c_cpu_stats_b.cpu_user_usec - c_cpu_stats_a.cpu_user_usec;
     delta.cpu_system_usec = c_cpu_stats_b.cpu_system_usec - c_cpu_stats_a.cpu_system_usec;
@@ -53,8 +53,8 @@ float count_host_cpu_load(HostCPUStats cpu_stats_delta)
                    cpu_stats_delta.cpu_guest +
                    cpu_stats_delta.cpu_guest_nice;
 
-    return ((float)(cpu_stats_delta.cpu_user + cpu_stats_delta.cpu_system + cpu_stats_delta.cpu_nice)) /
-           ((float)total) *
+    return static_cast<float>(cpu_stats_delta.cpu_user + cpu_stats_delta.cpu_system + cpu_stats_delta.cpu_nice) /
+           static_cast<float>(total) *
            100.0f;
 }
 
@@ -72,5 +72,5 @@ float count_container_cpu_load(ContainerCPUStats delta, uint64_t interval_usec_m
 
     uint64_t active_usec = delta.cpu_user_usec + delta.cpu_system_usec + delta.nice_usec;
 
-    return ((float)active_usec / (float)interval_usec_ms) * 100.0f;
+    return (static_cast<float>(active_usec) / static_cast<float>(interval_usec_ms)) * 100.0f;
 }

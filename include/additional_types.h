@@ -20,6 +20,9 @@
 #include <mutex>
 #include <atomic>
 
+
+namespace fs = std::filesystem;
+
 // to find numbers
 const std::string num_arr{"0123456789"};
 
@@ -112,7 +115,7 @@ struct MetricArgs
     std::string m_description;
     std::string m_unit{"gauge"};
     std::string m_value;
-    std::string label_substr{""};
+    std::string label_substr;
     inline std::string get_m_name() { return name_prefix + m_name; };
 };
 

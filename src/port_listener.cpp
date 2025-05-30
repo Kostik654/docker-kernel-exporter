@@ -11,7 +11,7 @@ void Listener::start_server(size_t l_delay)
 {
     int server_fd, new_socket;
 
-    sockaddr_in address;
+    sockaddr_in address{};
 
     int addr_len = sizeof(address);
 

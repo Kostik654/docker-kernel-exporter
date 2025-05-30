@@ -14,33 +14,31 @@ private:
 
     config_data cfg_data;
 
-    StaticHostData static_host_data;
-
     std::vector<std::string> actual_containers_list;
 
 public:
     static bool exit_flag;
     static unsigned int exit_code;
 
-    Collector(config_data cfg);
+    explicit Collector(config_data cfg);
 
-    HostStatsData collect_host_data(); // host dynamic stats
-    ContainerStatsData collect_container_data(std::string c_id); // container dynamic stats + json static
+    [[nodiscard]] HostStatsData collect_host_data() const; // host dynamic stats
+    [[nodiscard]] ContainerStatsData collect_container_data(std::string c_id) const; // container dynamic stats + json static
 
-    std::string get_container_dockerd_full_path(std::string cfid_);
-    std::string get_container_cgroup2_full_path(std::string cfid_);
+    [[nodiscard]] std::string get_container_dockerd_full_path(std::string cfid_) const;
+    [[nodiscard]] std::string get_container_cgroup2_full_path(std::string cfid_) const;
 
     void startCollecting();
 
     bool check_paths();
 
-    bool set_static_host_info(StaticHostData *host_stats);
+    bool set_static_host_info(StaticHostData &host_stats) const;
 
     std::string collected_data;
 
     std::atomic<bool> lock_data = false;
 
-    void printConfig();
+    void printConfig() const;
 
     ~Collector();
 };
