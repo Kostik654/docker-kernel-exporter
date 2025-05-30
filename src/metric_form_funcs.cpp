@@ -6,7 +6,7 @@ std::string get_host_static_metric_fields(StaticHostData host_data)
 
     MetricArgs h_memory, h_vcpuc; // gauge
 
-    std::string obj_type{"{object=\"host\", stat_type=\"static\"}"};
+    std::string obj_type{R"({object="host", stat_type="static"})"};
     h_memory.label_substr = obj_type;
     h_vcpuc.label_substr = obj_type;
 
@@ -41,7 +41,7 @@ std::string get_host_stats_fields(HostStatsData host_data)
     MetricArgs h_cpu_usage, h_procs_total, h_procs_run; // gauge
     MetricArgs h_memory_avail, h_memory_free;           // gauge
 
-    std::string obj_type{"{object=\"host\", stat_type=\"dynamic\"}"};
+    std::string obj_type{R"({object="host", stat_type="dynamic"})"};
     h_cpu_usage.label_substr = obj_type;
     h_procs_total.label_substr = obj_type;
     h_procs_run.label_substr = obj_type;
@@ -84,7 +84,7 @@ std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_
 
     std::ostringstream obj_label;
 
-    obj_label << "{object=\"container\", stat_type=\"dynamic\"";
+    obj_label << R"({object="container", stat_type="dynamic")";
     obj_label << ", c_id=\"" << c_id << "\"";
     obj_label << ", c_name=\"" << c_data.json_stats.name << "\"";
     obj_label << ", is_c_running=\"" << std::to_string(c_data.json_stats.is_running) << "\"";
@@ -117,7 +117,7 @@ std::string get_container_stats_fields(ContainerStatsData c_data, std::string c_
         c_memory_current_usage.m_name = {"container_memory_usage"};
         c_memory_swap_usage.m_name = {"container_swap_usage"};
         io_read.m_name = {"container_reading_bytes"};
-        io_write.m_name = {"container_writting_bytes"};
+        io_write.m_name = {"container_writing_bytes"};
         net_rx.m_name = {"container_rx_bytes"};
         net_tx.m_name = {"container_tx_bytes"};
 

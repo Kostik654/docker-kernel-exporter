@@ -95,7 +95,6 @@ config_data upload_config_data(std::string filepath)
     config_data cfg;
 
     std::ifstream conf_file(filepath);
-    std::string line;
     std::vector<std::string> lines;
 
     bool scrapeperiod_initialized = false;
@@ -118,18 +117,18 @@ config_data upload_config_data(std::string filepath)
         {
             printf("\nUploading configuration from file: %s\n", filepath.c_str());
 
-            if (conf_file.is_open())
-            {
+            if (conf_file.is_open()) {
+                std::string line;
                 while (std::getline(conf_file, line))
                 {
 
-                    std::string clean_line{""};
+                    std::string clean_line;
 
                     // delete all spaces
                     for (char c : line)
                     {
                         if (!std::isspace(static_cast<unsigned char>(c)))
-                            clean_line = clean_line + c;
+                            clean_line += c;
                     }
 
                     if (clean_line.empty() || clean_line[0] == '#')
@@ -226,7 +225,7 @@ config_data upload_config_data(std::string filepath)
             else
             {
                 std::cerr << ">> Error: unable to open the configuration file [" << filepath << "].\nThe uninitialized vars will be set to defaults.\n";
-                return config_data();
+                return {};
             }
 
             if (all_in)
@@ -244,6 +243,6 @@ config_data upload_config_data(std::string filepath)
             printf("\n== Not all the configuration variables were updated successfully. Uninitialized vars will be set to defaults. ==\n");
             conf_file.close();
             // returns default values
-            return config_data();
+            return {};
         }
 }

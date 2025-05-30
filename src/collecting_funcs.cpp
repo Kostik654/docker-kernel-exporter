@@ -45,19 +45,19 @@ bool update_containers_list(std::string base_path, std::vector<std::string> *lis
 
 MemInfoData get_host_meminfo_data(std::string filepath, bool just_total)
 {
-    MemInfoData mem_data;
+    MemInfoData mem_data{};
 
     bool total_initialized = false;
     bool free_initialized = false;
     bool avail_initialized = false;
 
     std::ifstream meminfo_file(filepath);
-    std::string line;
 
     try
     {
         if (meminfo_file.is_open())
         {
+            std::string line;
 
             while (std::getline(meminfo_file, line))
             {
@@ -117,11 +117,9 @@ MemInfoData get_host_meminfo_data(std::string filepath, bool just_total)
 
 HostCPUStats get_host_cpu_data(std::string filepath)
 {
-    HostCPUStats host_stats;
+    HostCPUStats host_stats{};
 
     std::ifstream cpu_file(filepath);
-    std::string line;
-    bool is_first_line = true;
 
     bool stats_initialized = false;
     bool procs_initialized = false;
@@ -131,6 +129,8 @@ HostCPUStats get_host_cpu_data(std::string filepath)
     {
         if (cpu_file.is_open())
         {
+            bool is_first_line = true;
+            std::string line;
             // cpu  289596 603 78161 4257920 11095 0 839 0 0 0
             while (std::getline(cpu_file, line))
             {
@@ -191,11 +191,9 @@ HostCPUStats get_host_cpu_data(std::string filepath)
 
             if (!(procs_initialized && rprocs_initialized && stats_initialized))
                 throw std::runtime_error("not all stats were found");
-            else
-                return host_stats;
+            return host_stats;
         }
-        else
-            throw std::runtime_error("unable to open file");
+        throw std::runtime_error("unable to open file");
     }
     catch (const std::exception &err)
     {
@@ -203,8 +201,6 @@ HostCPUStats get_host_cpu_data(std::string filepath)
         cpu_file.close();
         exit(3);
     }
-
-    return host_stats;
 }
 
 ContainerDockerdData get_container_json_data(std::string filepath)
@@ -212,17 +208,17 @@ ContainerDockerdData get_container_json_data(std::string filepath)
     ContainerDockerdData c_js_stats;
 
     std::ifstream json_file(filepath);
-    std::string line;
 
     std::regex pid_look_temp(R"("Pid":(\d+))");
     std::regex name_look_temp(R"xxx("Name":"([^"]+)")xxx");
     std::regex health_look_temp(R"xxx("Health"\s*:\s*\{[^{]*"Status"\s*:\s*"([^"]+))xxx");
-    std::smatch match;
 
     try
     {
         if (json_file.is_open())
         {
+            std::smatch match;
+            std::string line;
             // raw json line
             getline(json_file, line);
 
@@ -270,10 +266,8 @@ ContainerDockerdData get_container_json_data(std::string filepath)
 
 ContainerCPUStats get_container_cpu_stats(std::string filepath)
 {
-    ContainerCPUStats c_cpu_stats;
+    ContainerCPUStats c_cpu_stats{};
     std::ifstream cpu_file(filepath);
-    std::string line;
-    std::string val_;
     // access template
     unsigned int ContainerCPUStats::*cpu_stat_fields[] = {
         &ContainerCPUStats::cpu_usage_usec,
@@ -291,6 +285,8 @@ ContainerCPUStats get_container_cpu_stats(std::string filepath)
     {
         if (cpu_file.is_open())
         {
+            std::string val_;
+            std::string line;
             // auto == unsigned int HostCPUStats::*
             for (auto field : cpu_stat_fields)
             {
@@ -319,7 +315,7 @@ ContainerCPUStats get_container_cpu_stats(std::string filepath)
 
 ContainerMemoryStats get_container_mem_stats(std::string filepath)
 {
-    ContainerMemoryStats c_mem_stats;
+    ContainerMemoryStats c_mem_stats{};
 
     std::string line_current = read_file_line(filepath + "memory.current");
     std::string line_swap = read_file_line(filepath + "memory.swap.current");
@@ -352,7 +348,7 @@ ContainerIOStats get_container_io_stats(std::string filepath)
 Cgroup2StatsData get_container_cgroup_data(std::string filepath, unsigned int cpu_int)
 {
     Cgroup2StatsData c_cg2_stats;
-    ContainerCPUStats cpu_a, cpu_b;
+    ContainerCPUStats cpu_a{}, cpu_b{};
 
     cpu_a = get_container_cpu_stats(filepath + "cpu.stat");
     std::this_thread::sleep_for(std::chrono::milliseconds(cpu_int));
@@ -373,13 +369,13 @@ NetworkStatsData get_process_network_data(size_t main_pid)
     std::string filepath{get_pid_netdev_full_path(std::to_string(main_pid))};
 
     std::ifstream dev_file(filepath);
-    std::string line;
-    std::string val_;
 
     try
     {
         if (dev_file.is_open())
         {
+            std::string val_;
+            std::string line;
             getline(dev_file, line); // skip headers
             getline(dev_file, line); // skip headers
             getline(dev_file, line); // skip loopback iface
